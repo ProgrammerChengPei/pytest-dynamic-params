@@ -1,0 +1,40 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+.python-version
+*.egg-info/
+*.egg
+dist/
+build/
+*.pyc
+
+# Testing
+.coverage
+htmlcov/
+.pytest_cache/
+.mypy_cache/
+test-results.xml
+# Ignore report outputs but keep docs
+reports/allure-results/
+reports/allure-report/
+reports/coverage-html/
+reports/coverage.xml
+
+# IDEs
+.idea/
+.vscode/
+*.swp
+
+# Environment
+.env
+.venv/
+venv/
+
+# System
+.DS_Store
+Thumbs.db
+
+# Allure reports
+allure-results/
+allure-report/
