@@ -25,3 +25,12 @@ class TestParametrizedFixture:
         assert config["env"] == environment["env"]
         assert config["feature"] == feature_flag
         assert config["timeout"] == environment["timeout"] + 10
+    
+    # 测试边界情况：空的feature_flag
+    @with_dynamic_params(config=generate_config)
+    @pytest.mark.parametrize("feature_flag", ["", None])
+    def test_parametrized_fixture_empty_feature(self, environment, feature_flag, config):
+        """测试空feature_flag的情况"""
+        assert config["env"] == environment["env"]
+        assert config["feature"] == feature_flag
+        assert config["timeout"] == environment["timeout"] + 10

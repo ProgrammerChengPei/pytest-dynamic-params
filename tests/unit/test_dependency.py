@@ -90,20 +90,21 @@ class TestResolveDependencyOrder:
         """测试循环依赖错误的属性"""
         def func_a(b):  # a依赖b
             return f"a_based_on_{b}"
-        
+
         def func_b(a):  # b依赖a - 循环依赖
             return f"b_based_on_{a}"
-        
+
         gen_a = ParamGenerator(func_a, "a")
         gen_b = ParamGenerator(func_b, "b")
-        
+
         # 应该抛出CircularDependencyError
         with pytest.raises(CircularDependencyError) as exc_info:
             resolve_dependency_order([gen_a, gen_b])
-        
+
         error = exc_info.value
-        assert hasattr(error, 'cycle_path')
-        assert hasattr(error, 'node')
+        assert hasattr(error, 'cycle')
+        assert error.cycle is not None
+        assert len(error.cycle) >= 2
 
 
 class TestCircularDependencyDetection:

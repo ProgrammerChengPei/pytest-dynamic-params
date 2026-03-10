@@ -26,22 +26,68 @@ class ParamGenerator:
         
     def get_result(self, context: Dict[str, Any]) -> Any:
         """获取生成结果"""
-        if not self.lazy_support:
-            return self._execute_generator(context)
-            
-        if self.cache_enabled:
-            cache_key = self._make_cache_key(context)
-            if cache_key in self._cache:
-                self.stats["hits"] += 1
-                return self._cache[cache_key]
-                
-        self.stats["misses"] += 1
-        result = self._execute_generator(context)
+        from ..core.registry import GeneratorRegistry
+        registry = GeneratorRegistry.get_instance()
         
-        if self.cache_enabled:
-            self._cache[self._make_cache_key(context)] = result
+        if not self.lazy_support:
+            # 非懒加载模式，直接执行
+            if self.cache_enabled:
+                cache_key = self._make_cache_key(context)
+                # 检查作用域缓存
+                scoped_cache = registry.get_scoped_cache(self.scope)
+                if cache_key in scoped_cache:
+                    self.stats["hits"] += 1
+                    return scoped_cache[cache_key]
+                # 检查本地缓存（向后兼容）
+                elif cache_key in self._cache:
+                    self.stats["hits"] += 1
+                    return self._cache[cache_key]
+                    
+            self.stats["misses"] += 1
+            result = self._execute_generator(context)
             
-        return result
+            if self.cache_enabled:
+                # 存储到作用域缓存
+                scoped_cache = registry.get_scoped_cache(self.scope)
+                scoped_cache[cache_key] = result
+                # 存储到本地缓存（向后兼容）
+                self._cache[cache_key] = result
+                
+            return result
+        else:
+            # 懒加载模式，返回LazyResult对象
+            from ..lazy import LazyResult
+            cache_key = self._make_cache_key(context)
+            
+            # 检查缓存
+            if self.cache_enabled:
+                # 检查作用域缓存
+                scoped_cache = registry.get_scoped_cache(self.scope)
+                if cache_key in scoped_cache:
+                    self.stats["hits"] += 1
+                    return scoped_cache[cache_key]
+                # 检查本地缓存（向后兼容）
+                elif cache_key in self._cache:
+                    self.stats["hits"] += 1
+                    return self._cache[cache_key]
+            
+            # 生懒加载结果
+            self.stats["misses"] += 1
+            lazy_result = LazyResult(
+                generator=self,
+                context=context,
+                cache_key=cache_key
+            )
+            
+            # 缓存懒加载结果
+            if self.cache_enabled:
+                # 存储到作用域缓存
+                scoped_cache = registry.get_scoped_cache(self.scope)
+                scoped_cache[cache_key] = lazy_result
+                # 存储到本地缓存（向后兼容）
+                self._cache[cache_key] = lazy_result
+                
+            return lazy_result
         
     def _execute_generator(self, context: Dict[str, Any]) -> Any:
         """执行生成器函数"""

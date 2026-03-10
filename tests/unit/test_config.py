@@ -60,15 +60,25 @@ class TestDynamicParamConfig:
 
     def test_with_environment_variables(self):
         """测试从环境变量加载配置"""
-        with patch.dict(os.environ, {
-            "PYTEST_DYNAMIC_PARAM_CACHE": "false",
-            "PYTEST_DYNAMIC_PARAM_VALIDATION": "loose"
-        }):
-            # 重新创建配置对象以触发环境变量加载
-            config = DynamicParamConfig()
+        # 保存原始单例实例
+        original_instance = DynamicParamConfig._instance
+        
+        try:
+            # 清除单例实例
+            DynamicParamConfig._instance = None
             
-            assert config.get("cache", "enabled") is False
-            assert config.get("validation", "level") == "loose"
+            with patch.dict(os.environ, {
+                "PYTEST_DYNAMIC_PARAM_CACHE": "false",
+                "PYTEST_DYNAMIC_PARAM_VALIDATION": "loose"
+            }):
+                # 重新创建配置对象以触发环境变量加载
+                config = DynamicParamConfig()
+                
+                assert config.get("cache", "enabled") is False
+                assert config.get("validation", "level") == "loose"
+        finally:
+            # 恢复原始单例实例
+            DynamicParamConfig._instance = original_instance
 
     def test_with_config_file(self):
         """测试从配置文件加载配置"""

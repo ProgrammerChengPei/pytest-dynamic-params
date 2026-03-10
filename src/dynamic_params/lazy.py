@@ -21,9 +21,26 @@ class LazyResult:
         if self._executed:
             return self._result
             
-        self._result = self.generator.get_result(self.context)
+        # 执行生成器，获取结果
+        self._result = self.generator._execute_generator(self.context)
         self._executed = True
         return self._result
+    
+    def __eq__(self, other):
+        """支持与实际值的比较"""
+        return self.execute() == other
+    
+    def __str__(self):
+        """支持字符串表示"""
+        return str(self.execute())
+    
+    def __repr__(self):
+        """支持repr表示"""
+        return repr(self.execute())
+    
+    def __getitem__(self, key):
+        """支持字典访问"""
+        return self.execute()[key]
 
 
 def generate_lazy_combinations(
