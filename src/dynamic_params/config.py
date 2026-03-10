@@ -120,12 +120,20 @@ class DynamicParamConfig:
         
         return normalized
     
-    def get(self, section: str, option: str, default: Optional[Any] = None) -> Any:
+    def get(self, section: str, option: str, default: Optional[Any] = ...) -> Any:
         """获取配置值"""
         try:
+            if section not in self._config:
+                if default is not ...:
+                    return default
+                raise KeyError(section)
+            if option not in self._config[section]:
+                if default is not ...:
+                    return default
+                raise KeyError(option)
             return self._config[section][option]
         except KeyError:
-            if default is not None:
+            if default is not ...:
                 return default
             raise
     
