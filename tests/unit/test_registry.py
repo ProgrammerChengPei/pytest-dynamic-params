@@ -178,3 +178,58 @@ class TestGeneratorRegistry:
         
         # 检查缓存是否被清空
         assert len(generator._cache) == 0
+
+    def test_get_scoped_cache(self):
+        """测试获取作用域缓存"""
+        registry = GeneratorRegistry.get_instance()
+        
+        # 获取不同作用域的缓存
+        function_cache = registry.get_scoped_cache("function")
+        class_cache = registry.get_scoped_cache("class")
+        module_cache = registry.get_scoped_cache("module")
+        session_cache = registry.get_scoped_cache("session")
+        
+        # 验证缓存是字典类型
+        assert isinstance(function_cache, dict)
+        assert isinstance(class_cache, dict)
+        assert isinstance(module_cache, dict)
+        assert isinstance(session_cache, dict)
+
+    def test_set_scoped_cache(self):
+        """测试设置作用域缓存"""
+        registry = GeneratorRegistry.get_instance()
+        
+        # 创建一个新的缓存字典
+        new_cache = {"test_key": "test_value"}
+        
+        # 设置作用域缓存
+        registry.set_scoped_cache("function", new_cache)
+        
+        # 验证缓存是否被正确设置
+        function_cache = registry.get_scoped_cache("function")
+        assert function_cache == new_cache
+        assert function_cache["test_key"] == "test_value"
+
+    def test_get_function_signature(self):
+        """测试获取函数签名"""
+        registry = GeneratorRegistry.get_instance()
+        
+        # 测试无参数函数
+        def no_args_func():
+            return "test"
+        
+        # 测试有参数函数
+        def with_args_func(a, b):
+            return a + b
+        
+        # 验证函数可以正常注册
+        decorator = _ParamGeneratorDecorator()
+        decorated_no_args = decorator(no_args_func)
+        decorated_with_args = decorator(with_args_func)
+        
+        registry.register(decorated_no_args, "no_args_param")
+        registry.register(decorated_with_args, "with_args_param")
+        
+        # 验证注册成功
+        assert registry.is_registered("no_args_func")
+        assert registry.is_registered("with_args_func")
