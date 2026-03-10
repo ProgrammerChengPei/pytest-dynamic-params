@@ -1,1 +1,0 @@
-- python 编程需遵循 PEP8 规范，并且默认使用 pytest 测试框架
