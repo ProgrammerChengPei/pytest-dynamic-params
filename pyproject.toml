@@ -17,6 +17,16 @@ dependencies = [
     "pytest"
 ]
 
+[project.optional-dependencies]
+dev = [
+    "black",
+    "flake8",
+    "isort",
+    "mypy",
+    "bandit",
+    "pre-commit"
+]
+
 [project.entry-points.pytest11]
 dynamic-params = "dynamic_params.plugin"
 
