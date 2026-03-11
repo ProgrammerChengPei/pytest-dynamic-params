@@ -7,10 +7,10 @@
 - **声明式参数生成**：使用装饰器定义参数生成器，专注于"生成什么"而非"如何生成"
 - **自动依赖管理**：系统自动分析生成器函数的参数签名，确定依赖关系并按正确顺序执行
 - **与现有机制兼容**：完全兼容现有的pytest机制，包括`@pytest.mark.parametrize`装饰器和fixture系统
-- **懒加载支持**：支持懒加载参数生成，提高性能
-- **作用域管理**：支持function、class、module、session四种作用域
-- **循环依赖检测**：自动检测并报告参数生成器之间的循环依赖
-- **灵活配置**：支持多种配置选项，满足不同场景需求
+- **性能优化**：支持懒加载和缓存机制，提高测试执行效率
+- **灵活的作用域管理**：支持function、class、module、session四种作用域
+- **智能错误检测**：自动检测并报告参数生成器之间的循环依赖
+- **可配置性**：支持多种配置选项，满足不同场景需求
 
 ## 安装
 
@@ -40,14 +40,15 @@ def test_basic(input_value, result):
 - **参数生成器**：使用`@param_generator`装饰器定义的函数，用于生成参数值
 - **动态参数**：在运行时生成的参数，可以依赖其他参数或fixture
 - **参数依赖**：参数之间的依赖关系，系统自动按依赖顺序生成参数
-- **懒加载**：推迟参数生成到实际需要时执行
-- **作用域管理**：控制参数生成器实例的生命周期（function/class/module/session）
+- **懒加载**：推迟参数生成到实际需要时执行，避免不必要的计算
+- **缓存机制**：缓存参数生成结果，避免重复计算，提高性能
+- **作用域管理**：控制参数生成器实例的生命周期，影响缓存和执行时机
 
 ## 使用示例
 
 完整的使用示例请参见：
-- `examples/usage_examples.py` - 实际测试用例编写方法（可直接复制使用）
-- `examples/circular_dependency_example.py` - 循环依赖检测示例
+- `examples/basic_usage.py` - 基础用法示例（可直接复制使用）
+- `examples/advanced_usage.py` - 高级用法示例（包含作用域、缓存和懒加载）
 - `docs/usage-guide.md` - 详细使用指南
 
 ## 配置
@@ -77,6 +78,16 @@ markers =
     param_generator: 参数生成器函数
 ```
 
+也可以通过环境变量配置：
+- `PYTEST_DYNAMIC_PARAM_CACHE`: 控制缓存是否启用
+- `PYTEST_DYNAMIC_PARAM_VALIDATION`: 验证级别
+- `PYTEST_DYNAMIC_PARAM_LOG_LEVEL`: 日志级别
+- `PYTEST_DYNAMIC_PARAM_LAZY_LOADING`: 懒加载设置
+- `PYTEST_DYNAMIC_PARAM_INCREMENTAL`: 增量生成设置
+- `PYTEST_DYNAMIC_PARAM_DEBUG`: 调试模式
+- `PYTEST_DYNAMIC_PARAM_PROFILE`: 性能分析
+- `PYTEST_DYNAMIC_PARAM_CACHE_DIR`: 缓存目录
+
 ## 项目结构
 
 项目的主要组成部分：
@@ -102,6 +113,9 @@ python -m pytest tests/functional/
 # 运行集成测试
 python -m pytest tests/integration/
 
+# 运行性能测试
+python -m pytest tests/performance/
+
 # 运行所有测试
 python -m pytest tests/
 
@@ -109,7 +123,10 @@ python -m pytest tests/
 python -m pytest --cov=src.dynamic_params tests/unit/ --cov-report=html
 
 # 生成完整报告（Allure + 覆盖率）
-python generate_reports.bat
+python -m pytest tests/ --alluredir=reports/allure-results -clean --cov=src.dynamic_params --cov-report=html:reports/coverage-html --cov-report=xml:reports/coverage.xml --cov-report=term
+
+# 查看Allure报告
+allure serve reports/allure-results
 ```
 
 ## 测试报告
@@ -119,10 +136,9 @@ python generate_reports.bat
 - [docs/reports-summary.md](./docs/reports-summary.md) - 测试结果和覆盖率摘要
 
 生成的报告位于 `reports/` 目录：
-- Allure报告：`reports/allure-report/index.html`
+- Allure报告：`reports/allure-results`（可通过 `allure serve` 查看）
 - 覆盖率HTML报告：`reports/coverage-html/index.html`
 - 覆盖率XML报告：`reports/coverage.xml`
-
 
 ## 许可证
 
