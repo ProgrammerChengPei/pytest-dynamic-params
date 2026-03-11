@@ -1,5 +1,5 @@
 import inspect
-from typing import Any, Callable, Dict, List, TypeVar
+from typing import Any, Callable, Dict, List, Optional, TypeVar
 
 T = TypeVar("T")
 
@@ -25,7 +25,7 @@ class ParamGenerator:
         self._cache: Dict[str, Any] = {}
         self.stats = {"hits": 0, "misses": 0, "executions": 0}
         self.dependencies = self._extract_dependencies(func)
-        self._input_values = None
+        self._input_values: Optional[List[Any]] = None
 
     def get_result(self, context: Dict[str, Any]) -> Any:
         """获取生成结果"""

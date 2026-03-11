@@ -3,10 +3,7 @@
 import pytest
 
 from dynamic_params import ParamGenerator, param_generator
-from dynamic_params.dependency import (
-    CircularDependencyError,
-    resolve_dependency_order,
-)
+from dynamic_params.dependency import CircularDependencyError, resolve_dependency_order
 
 
 def test_circular_dependency_detection():

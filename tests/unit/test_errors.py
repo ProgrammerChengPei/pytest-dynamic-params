@@ -2,7 +2,7 @@
 
 import pytest
 
-from src.dynamic_params.errors import (
+from dynamic_params.errors import (
     CircularDependencyError,
     ConfigurationError,
     DynamicParamError,

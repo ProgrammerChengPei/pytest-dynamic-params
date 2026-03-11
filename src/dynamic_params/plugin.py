@@ -61,12 +61,12 @@ def pytest_generate_tests(metafunc):
     """pytest钩子：生成测试参数"""
     print(f"Checking {metafunc.function.__name__} for dynamic params")
     # 检查是否需要动态参数
-    if not hasattr(metafunc.function, "_requires_dynamic_params"):
+    if not hasattr(metafunc.function, "_requires"):
         print(f"No dynamic params found in {metafunc.function.__name__}")
         return
 
     # 获取参数映射
-    param_mapping = getattr(metafunc.function, "_dynamic_param_mapping", {})
+    param_mapping = getattr(metafunc.function, "_mapping", {})
 
     if not param_mapping:
         print(f"No dynamic param mapping found in {metafunc.function.__name__}")
@@ -112,10 +112,10 @@ def pytest_runtest_setup(item):
     """在测试运行前设置动态参数"""
     # 检查测试函数是否需要动态参数
     test_func = getattr(item, "function", None)
-    if not test_func or not hasattr(test_func, "_requires_dynamic_params"):
+    if not test_func or not hasattr(test_func, "_requires"):
         return
 
-    param_mapping = getattr(test_func, "_dynamic_param_mapping", {})
+    param_mapping = getattr(test_func, "_mapping", {})
     if not param_mapping:
         return
 
@@ -134,7 +134,7 @@ def pytest_runtest_call(item):
     if not test_func:
         return
 
-    param_mapping = getattr(test_func, "_dynamic_param_mapping", {})
+    param_mapping = getattr(test_func, "_mapping", {})
     if not param_mapping:
         return
 
@@ -280,8 +280,8 @@ def _create_lazy_fixture_for_module(
             return result
 
     # 标记为fixture
-    lazy_fixture.is_fixture = True
-    lazy_fixture._pytestfixturefunction = pytest.fixture()(lazy_fixture)
+    lazy_fixture.is_fixture = True  # type: ignore
+    lazy_fixture._pytestfixturefunction = pytest.fixture()(lazy_fixture)  # type: ignore
 
     # 将fixture注册到模块中
     module = metafunc.module

@@ -1,6 +1,6 @@
 """工具函数模块的单元测试"""
 
-from src.dynamic_params.utils import (
+from dynamic_params.utils import (
     get_function_signature,
     normalize_param_value,
     validate_param_name,

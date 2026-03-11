@@ -54,7 +54,7 @@ def generate_lazy_combinations(
     import itertools
 
     # 生成立即参数的所有组合
-    immediate_combinations = []
+    immediate_combinations: List[Dict[str, Any]] = []
     if static_params:
         param_names = list(static_params.keys())
         param_values = list(static_params.values())
@@ -66,16 +66,16 @@ def generate_lazy_combinations(
         immediate_combinations = [{}]
 
     # 为每个立即组合创建懒加载生成器
-    all_combinations = []
-    for combo in immediate_combinations:
-        new_combo = combo.copy()
+    all_combinations: List[Dict[str, Any]] = []
+    for combo_dict in immediate_combinations:
+        new_combo = combo_dict.copy()
 
         for generator in generators:
             # 创建懒加载结果
             lazy_result = LazyResult(
                 generator=generator,
-                context=combo,
-                cache_key=generator._make_cache_key(combo),
+                context=combo_dict,
+                cache_key=generator._make_cache_key(combo_dict),
             )
             new_combo[generator.param_name] = lazy_result
 

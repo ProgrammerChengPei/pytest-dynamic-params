@@ -2,7 +2,7 @@
 使用pytest-benchmark的基准测试
 """
 
-from src.dynamic_params import param_generator, with_dynamic_params
+from dynamic_params import param_generator, with_dynamic_params
 
 
 class TestBenchmark:

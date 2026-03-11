@@ -1,7 +1,7 @@
 """懒加载模块的单元测试"""
 
-from src.dynamic_params.core.generator import ParamGenerator
-from src.dynamic_params.lazy import LazyResult, generate_lazy_combinations
+from dynamic_params.core.generator import ParamGenerator
+from dynamic_params.lazy import LazyResult, generate_lazy_combinations
 
 
 class TestLazyResult:

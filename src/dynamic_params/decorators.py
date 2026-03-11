@@ -19,11 +19,11 @@ class _ParamGeneratorDecorator:
         装饰器调用入口
         """
         # 添加类型标记（供with_dynamic_params验证）
-        func._is_param_generator = True
-        func._scope = self.scope
-        func._cache_enabled = self.cache_enabled
-        func._lazy_support = self.lazy_support
-        func._decorator_args = {
+        func._is_param_generator = True  # type: ignore[attr-defined]
+        func._scope = self.scope  # type: ignore[attr-defined]
+        func._cache_enabled = self.cache_enabled  # type: ignore[attr-defined]
+        func._lazy_support = self.lazy_support  # type: ignore[attr-defined]
+        func._decorator_args = {  # type: ignore[attr-defined]
             "scope": self.scope,
             "cache_enabled": self.cache_enabled,
             "lazy_support": self.lazy_support,
@@ -73,24 +73,24 @@ def with_dynamic_params(**param_mapping: Callable):
                 )
 
         # Initialize dynamic param attributes on test function
-        test_func._dynamic_param_mapping = param_mapping
-        test_func._requires_dynamic_params = True
+        test_func._mapping = param_mapping  # type: ignore[attr-defined]
+        test_func._requires = True  # type: ignore[attr-defined]
 
         # Mark function as dynamic param test
-        test_func.pytestmark = getattr(test_func, "pytestmark", [])
-        test_func.pytestmark.append(pytest.mark.dynamic_param)
+        test_func.pytestmark = getattr(test_func, "pytestmark", [])  # type: ignore
+        test_func.pytestmark.append(pytest.mark.dynamic_param)  # type: ignore
 
         @functools.wraps(test_func)
         def wrapper(*args, **kwargs):
             return test_func(*args, **kwargs)
 
         # 传递动态参数元数据到wrapper
-        wrapper._dynamic_param_mapping = test_func._dynamic_param_mapping
-        wrapper._requires_dynamic_params = test_func._requires_dynamic_params
+        wrapper._mapping = test_func._mapping  # type: ignore[attr-defined]
+        wrapper._requires = test_func._requires  # type: ignore[attr-defined]
 
         # 确保wrapper也被识别为测试
-        wrapper.pytestmark = getattr(wrapper, "pytestmark", [])
-        wrapper.pytestmark.append(pytest.mark.dynamic_param)
+        wrapper.pytestmark = getattr(wrapper, "pytestmark", [])  # type: ignore
+        wrapper.pytestmark.append(pytest.mark.dynamic_param)  # type: ignore
 
         # 确保wrapper有正确的 __name__
         wrapper.__name__ = test_func.__name__

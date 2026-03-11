@@ -1,8 +1,8 @@
 """GeneratorRegistry类的单元测试"""
 
-from src.dynamic_params.core.registry import GeneratorRegistry
-from src.dynamic_params.decorators import _ParamGeneratorDecorator
-from src.dynamic_params.errors import InvalidGeneratorError
+from dynamic_params.core.registry import GeneratorRegistry
+from dynamic_params.decorators import _ParamGeneratorDecorator
+from dynamic_params.errors import InvalidGeneratorError
 
 
 class TestGeneratorRegistry:

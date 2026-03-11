@@ -10,7 +10,7 @@ license = { file = "LICENSE" }
 classifiers = [
     "Framework :: Pytest",
     "Programming Language :: Python :: 3",
-    "Operating System :: OS Independent",
+    "Operating System :: OS Independent"
 ]
 requires-python = ">=3.8"
 dependencies = [
@@ -55,4 +55,21 @@ profile = "black"
 
 [tool.flake8]
 max-line-length = 88
-extend-ignore = ["E203"]
+extend-ignore = [
+    "E203",  # 与 black 冲突的空格规则
+    "ANN101", "ANN102", "ANN103", "ANN104",  # 忽略 self/cls 的类型注解检查
+    "ANN201", "ANN202", "ANN203", "ANN204", "ANN205", "ANN206",  # 忽略返回值类型注解检查
+    "ANN001", "ANN002", "ANN003"  # 忽略参数类型注解检查
+]
+
+[tool.flake8.plugins]
+flake8-annotations = false
+
+[tool.mypy]
+python_version = "3.10"
+ignore_missing_imports = true
+exclude = "^tests/|^venv/|^\\.venv/"
+mypy_path = "src"
+follow_imports = "silent"
+warn_unused_configs = true
+namespace_packages = true

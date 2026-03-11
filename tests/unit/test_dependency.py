@@ -2,11 +2,8 @@
 
 import pytest
 
-from src.dynamic_params.core.generator import ParamGenerator
-from src.dynamic_params.dependency import (
-    CircularDependencyError,
-    resolve_dependency_order,
-)
+from dynamic_params.core.generator import ParamGenerator
+from dynamic_params.dependency import CircularDependencyError, resolve_dependency_order
 
 
 class TestResolveDependencyOrder:

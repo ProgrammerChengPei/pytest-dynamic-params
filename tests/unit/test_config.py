@@ -4,7 +4,7 @@ import os
 import tempfile
 from unittest.mock import patch
 
-from src.dynamic_params.config import DynamicParamConfig
+from dynamic_params.config import DynamicParamConfig
 
 
 class TestDynamicParamConfig:
@@ -160,7 +160,7 @@ class TestDynamicParamConfig:
             config._config["cache"]["enabled"] = "not a boolean"
 
             # 验证应该抛出 ConfigurationError
-            from src.dynamic_params.errors import ConfigurationError
+            from dynamic_params.errors import ConfigurationError
 
             try:
                 config.validate()
@@ -186,7 +186,7 @@ class TestDynamicParamConfig:
             config._config["validation"]["level"] = "invalid_level"
 
             # 验证应该抛出 ConfigurationError
-            from src.dynamic_params.errors import ConfigurationError
+            from dynamic_params.errors import ConfigurationError
 
             try:
                 config.validate()
@@ -212,7 +212,7 @@ class TestDynamicParamConfig:
             config._config["validation"]["log_level"] = "INVALID"
 
             # 验证应该抛出 ConfigurationError
-            from src.dynamic_params.errors import ConfigurationError
+            from dynamic_params.errors import ConfigurationError
 
             try:
                 config.validate()
@@ -275,7 +275,7 @@ class TestDynamicParamConfig:
                 config.get = mock_get
 
                 # 验证应该抛出 ConfigurationError
-                from src.dynamic_params.errors import ConfigurationError
+                from dynamic_params.errors import ConfigurationError
 
                 try:
                     config.validate()

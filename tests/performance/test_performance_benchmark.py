@@ -6,7 +6,7 @@ import time
 
 import pytest
 
-from src.dynamic_params import param_generator, with_dynamic_params
+from dynamic_params import param_generator, with_dynamic_params
 
 
 class TestPerformanceBenchmark:

@@ -1,2 +1,3 @@
 - Python 代码必须遵循 PEP8 规范
+- 代码需符合项目 .pre-commit-config.yaml 中定义的规范
 - 默认使用 pytest 作为测试框架，使用 allure 生成测试报告，生成测试覆盖率报告

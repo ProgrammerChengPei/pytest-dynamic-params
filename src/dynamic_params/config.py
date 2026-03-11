@@ -23,7 +23,8 @@ class DynamicParamConfig:
         "debug": {"enabled": "false", "profile": "false"},
     }
 
-    _instance = None
+    _instance: Optional["DynamicParamConfig"] = None
+    _config: Dict[str, Any]
 
     def __new__(cls):
         if cls._instance is None:
@@ -88,7 +89,7 @@ class DynamicParamConfig:
 
     def _normalize_config(self, config: configparser.ConfigParser) -> Dict[str, Any]:
         """标准化配置值"""
-        normalized = {}
+        normalized: Dict[str, Any] = {}
 
         for section in config.sections():
             normalized[section] = {}

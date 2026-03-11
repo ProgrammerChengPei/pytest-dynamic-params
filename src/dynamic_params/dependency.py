@@ -66,7 +66,7 @@ def resolve_dependency_order(generators: List[ParamGenerator]) -> List[ParamGene
         remaining = [node for node in in_degree if in_degree[node] > 0]
         if remaining:
             # 构建循环路径
-            cycle_path = []
+            cycle_path: List[str] = []
             visited = set()
 
             def find_cycle(node):

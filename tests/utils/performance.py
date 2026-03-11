@@ -5,7 +5,7 @@
 import gc
 import os
 import time
-from typing import Any, Callable, Dict, List
+from typing import Any, Callable, Dict, List, Optional
 
 import psutil
 
@@ -151,7 +151,10 @@ class PerformanceReport:
         self.results = []
 
     def add_result(
-        self, test_name: str, execution_time: float, memory_usage: float = None
+        self,
+        test_name: str,
+        execution_time: float,
+        memory_usage: Optional[float] = None,
     ):
         """
         添加测试结果

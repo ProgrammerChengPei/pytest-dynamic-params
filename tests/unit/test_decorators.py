@@ -2,7 +2,7 @@
 
 import pytest
 
-from src.dynamic_params.decorators import (
+from dynamic_params.decorators import (
     _ParamGeneratorDecorator,
     param_generator,
     with_dynamic_params,
@@ -123,13 +123,11 @@ class TestWithDynamicParams:
         decorated_func = with_dynamic_params(dynamic_param=sample_generator)(test_func)
 
         # 验证装饰后的函数具有正确的属性
-        assert hasattr(decorated_func, "_dynamic_param_mapping")
-        assert hasattr(decorated_func, "_requires_dynamic_params")
-        assert decorated_func._requires_dynamic_params is True
-        assert "dynamic_param" in decorated_func._dynamic_param_mapping
-        assert (
-            decorated_func._dynamic_param_mapping["dynamic_param"] == sample_generator
-        )
+        assert hasattr(decorated_func, "_mapping")
+        assert hasattr(decorated_func, "_requires")
+        assert decorated_func._requires is True
+        assert "dynamic_param" in decorated_func._mapping
+        assert decorated_func._mapping["dynamic_param"] == sample_generator
 
     def test_decorator_validation(self):
         """测试with_dynamic_params装饰器验证功能"""
@@ -172,10 +170,10 @@ class TestWithDynamicParams:
             test_func
         )
 
-        assert "param1" in decorated_func._dynamic_param_mapping
-        assert "param2" in decorated_func._dynamic_param_mapping
-        assert decorated_func._dynamic_param_mapping["param1"] == generator1
-        assert decorated_func._dynamic_param_mapping["param2"] == generator2
+        assert "param1" in decorated_func._mapping
+        assert "param2" in decorated_func._mapping
+        assert decorated_func._mapping["param1"] == generator1
+        assert decorated_func._mapping["param2"] == generator2
 
     def test_with_dynamic_params_wrapper_preserves_name(self):
         """测试with_dynamic_params装饰器保持函数名称"""

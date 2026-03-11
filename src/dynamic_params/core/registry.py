@@ -1,6 +1,6 @@
 """参数生成器注册表模块"""
 
-from typing import Callable, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 
 from ..errors import InvalidGeneratorError
 from .generator import ParamGenerator
@@ -9,7 +9,10 @@ from .generator import ParamGenerator
 class GeneratorRegistry:
     """生成器注册表（单例）"""
 
-    _instance = None
+    _instance: Optional["GeneratorRegistry"] = None
+    _generators: Dict[str, ParamGenerator]
+    _param_to_generator: Dict[str, str]
+    _scoped_caches: Dict[str, Dict[str, Any]]
 
     def __new__(cls):
         if cls._instance is None:

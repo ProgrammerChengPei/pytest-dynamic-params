@@ -1,7 +1,7 @@
 """ParamGenerator类的单元测试"""
 
-from src.dynamic_params.core.generator import ParamGenerator
-from src.dynamic_params.errors import MissingParameterError
+from dynamic_params.core.generator import ParamGenerator
+from dynamic_params.errors import MissingParameterError
 
 
 class TestParamGenerator:
@@ -57,7 +57,7 @@ class TestParamGenerator:
     def test_caching(self):
         """测试ParamGenerator的缓存功能"""
         # 清除 GeneratorRegistry 实例，确保测试环境干净
-        from src.dynamic_params.core.registry import GeneratorRegistry
+        from dynamic_params.core.registry import GeneratorRegistry
 
         GeneratorRegistry._instance = None
 
@@ -88,7 +88,7 @@ class TestParamGenerator:
     def test_stats(self):
         """测试ParamGenerator的统计信息"""
         # 清除 GeneratorRegistry 实例，确保测试环境干净
-        from src.dynamic_params.core.registry import GeneratorRegistry
+        from dynamic_params.core.registry import GeneratorRegistry
 
         GeneratorRegistry._instance = None
 
@@ -143,7 +143,7 @@ class TestParamGenerator:
     def test_get_result_without_lazy_support(self):
         """测试不支持懒加载时的get_result方法"""
         # 清除 GeneratorRegistry 实例，确保测试环境干净
-        from src.dynamic_params.core.registry import GeneratorRegistry
+        from dynamic_params.core.registry import GeneratorRegistry
 
         GeneratorRegistry._instance = None
 

@@ -7,7 +7,7 @@ import random
 
 import pytest
 
-from src.dynamic_params import param_generator, with_dynamic_params
+from dynamic_params import param_generator, with_dynamic_params
 from tests.utils import (
     TestClass,
     measure_execution_time,
@@ -308,9 +308,7 @@ class TestPerformance:
 
     def test_memory_usage_measurement(self):
         """测试内存使用情况"""
-        from tests.performance.utils import (
-            measure_memory_usage,
-        )
+        from tests.performance.utils import measure_memory_usage
 
         # 测试生成大对象时的内存使用
         @param_generator
