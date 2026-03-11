@@ -13,9 +13,15 @@ def get_raw_data(data_source, size):
 def process_data(raw_data, algorithm):
     """处理数据 - 简化版的算法应用"""
     if algorithm == "algo1":
-        return [{"id": item["id"], "processed": item["id"] * 2} for item in raw_data]
+        return [
+            {"id": item["id"], "processed": item["id"] * 2}
+            for item in raw_data
+        ]
     else:  # algo2
-        return [{"id": item["id"], "processed": item["id"] * 3} for item in raw_data]
+        return [
+            {"id": item["id"], "processed": item["id"] * 3}
+            for item in raw_data
+        ]
 
 
 @param_generator

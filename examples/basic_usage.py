@@ -57,7 +57,7 @@ def generate_config(environment, feature_flag):
     return {
         "env": environment["env"],
         "feature": feature_flag,
-        "timeout": environment["timeout"] + 10
+        "timeout": environment["timeout"] + 10,
     }
 
 
@@ -92,11 +92,7 @@ def app_config(database_config):
 @param_generator
 def generate_test_data(app_config, test_type):
     """依赖于嵌套fixture的参数生成器"""
-    return {
-        "config": app_config,
-        "type": test_type,
-        "data": [1, 2, 3]
-    }
+    return {"config": app_config, "type": test_type, "data": [1, 2, 3]}
 
 
 @with_dynamic_params(test_data=generate_test_data)

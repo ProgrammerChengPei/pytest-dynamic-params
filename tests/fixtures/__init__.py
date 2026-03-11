@@ -5,9 +5,5 @@ from .database import database
 from .environment import environment
 
 __all__ = [
-    'database',
-    'environment',
-    'base_config',
-    'database_config',
-    'app_config'
+    "database", "environment", "base_config", "database_config", "app_config"
 ]

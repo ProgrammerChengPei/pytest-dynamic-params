@@ -1,6 +1,7 @@
 """
 测试生成器函数
 """
+
 from dynamic_params import param_generator
 
 
@@ -23,6 +24,7 @@ def dependency_generator(value):
 def cached_generator():
     """带缓存的生成器"""
     import time
+
     time.sleep(0.1)  # 模拟耗时操作
     return "cached_value"
 
@@ -32,5 +34,6 @@ def cached_generator():
 def lazy_generator(value):
     """懒加载生成器"""
     import time
+
     time.sleep(0.1)  # 模拟耗时操作
     return value * 2

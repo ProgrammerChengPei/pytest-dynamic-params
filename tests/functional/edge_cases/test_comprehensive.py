@@ -2,6 +2,7 @@
 综合边界情况测试
 测试各种边界值和异常输入场景
 """
+
 import pytest
 from dynamic_params import param_generator, with_dynamic_params
 
@@ -52,12 +53,27 @@ def handle_complex_input(data):
 
 class TestEdgeCasesComprehensive:
     """综合边界情况测试类"""
-    
+
     @with_dynamic_params(result=handle_edge_cases)
-    @pytest.mark.parametrize("value", [
-        None, "", -1, -1000, 0, 1, 1000000, 1000001,  # 基本边界值
-        True, False, [], {}, "test", 3.14,  # 不同类型
-    ])
+    @pytest.mark.parametrize(
+        "value",
+        [
+            None,
+            "",
+            -1,
+            -1000,
+            0,
+            1,
+            1000000,
+            1000001,  # 基本边界值
+            True,
+            False,
+            [],
+            {},
+            "test",
+            3.14,  # 不同类型
+        ],
+    )
     def test_basic_edge_cases(self, value, result):
         """测试基本边界情况"""
         if value is None:
@@ -75,12 +91,21 @@ class TestEdgeCasesComprehensive:
                 assert result == f"normal_{value}"
         else:
             assert result == f"normal_{value}"
-    
+
     @with_dynamic_params(exception_result=handle_exception_input)
-    @pytest.mark.parametrize("value", [
-        1, 2, 0, 5,  # 数值
-        "string", [], {}, None,  # 非数值类型
-    ])
+    @pytest.mark.parametrize(
+        "value",
+        [
+            1,
+            2,
+            0,
+            5,  # 数值
+            "string",
+            [],
+            {},
+            None,  # 非数值类型
+        ],
+    )
     def test_exception_handling(self, value, exception_result):
         """测试异常输入处理"""
         if value == 0:
@@ -89,12 +114,23 @@ class TestEdgeCasesComprehensive:
             assert exception_result == "type_error"
         else:
             assert exception_result == 10 / value
-    
+
     @with_dynamic_params(result=handle_complex_input)
-    @pytest.mark.parametrize("data", [
-        [], [1, 2, 3], {}, {"a": 1, "b": 2},  # 空和非空集合
-        "", "test", 123, 3.14, True, None,  # 其他类型
-    ])
+    @pytest.mark.parametrize(
+        "data",
+        [
+            [],
+            [1, 2, 3],
+            {},
+            {"a": 1, "b": 2},  # 空和非空集合
+            "",
+            "test",
+            123,
+            3.14,
+            True,
+            None,  # 其他类型
+        ],
+    )
     def test_complex_inputs(self, data, result):
         """测试复杂输入处理"""
         if not data:
@@ -105,13 +141,22 @@ class TestEdgeCasesComprehensive:
             assert result == f"dict_with_{len(data)}_keys"
         else:
             assert result == f"type_{type(data).__name__}"
-    
+
     @with_dynamic_params(result=handle_edge_cases)
-    @pytest.mark.parametrize("value", [
-        float('inf'), float('-inf'), float('nan'),  # 特殊浮点数
-        " ", "\n", "\t",  # 空白字符串
-        999999, 1000000, 1000001,  # 接近边界的整数
-    ])
+    @pytest.mark.parametrize(
+        "value",
+        [
+            float("inf"),
+            float("-inf"),
+            float("nan"),  # 特殊浮点数
+            " ",
+            "\n",
+            "\t",  # 空白字符串
+            999999,
+            1000000,
+            1000001,  # 接近边界的整数
+        ],
+    )
     def test_special_edge_cases(self, value, result):
         """测试特殊边界情况"""
         if value is None:

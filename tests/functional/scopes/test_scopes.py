@@ -26,22 +26,22 @@ def module_scope_data():
 
 class TestScopes:
     """测试不同作用域的测试类"""
-    
+
     @with_dynamic_params(
         func_data=func_scope_data,
         class_data=class_scope_data,
-        mod_data=module_scope_data
+        mod_data=module_scope_data,
     )
     def test_first_function_scope(self, func_data, class_data, mod_data):
         """第一个函数作用域测试"""
         assert func_data == "function_data"
         assert class_data == "class_data"
         assert mod_data == "module_data"
-    
+
     @with_dynamic_params(
         func_data=func_scope_data,
         class_data=class_scope_data,
-        mod_data=module_scope_data
+        mod_data=module_scope_data,
     )
     def test_second_function_scope(self, func_data, class_data, mod_data):
         """第二个函数作用域测试"""

@@ -9,31 +9,33 @@ from src.dynamic_params.utils import (
 
 class TestGetFunctionSignature:
     """get_function_signature函数的测试类"""
-    
+
     def test_get_function_signature(self):
         """测试获取函数签名"""
+
         def sample_func(a, b, c=10):
             return a + b + c
-        
+
         signature = get_function_signature(sample_func)
-        
+
         assert "sample_func" in signature
         assert "(a, b, c=10)" in signature
 
     def test_get_function_signature_no_params(self):
         """测试无参函数的签名"""
+
         def no_param_func():
             return "no params"
-        
+
         signature = get_function_signature(no_param_func)
-        
+
         assert "no_param_func" in signature
         assert "()" in signature
 
 
 class TestValidateParamName:
     """validate_param_name函数的测试类"""
-    
+
     def test_valid(self):
         """测试有效的参数名称"""
         assert validate_param_name("valid_name") is True
@@ -59,7 +61,7 @@ class TestValidateParamName:
 
 class TestNormalizeParamValue:
     """normalize_param_value函数的测试类"""
-    
+
     def test_normalize_param_value(self):
         """测试参数值标准化"""
         # normalize_param_value函数目前只是返回原始值

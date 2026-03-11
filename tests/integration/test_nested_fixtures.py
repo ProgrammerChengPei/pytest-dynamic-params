@@ -2,6 +2,7 @@
 示例4: 多个fixture嵌套
 对应 specs/需求.md 第354-376行的使用示例
 """
+
 import pytest
 
 from dynamic_params import with_dynamic_params
@@ -29,19 +30,23 @@ def app_config(database_config):
 
 class TestNestedFixtures:
     """测试嵌套fixtures的测试类"""
-    
+
     @with_dynamic_params(test_data=generate_test_data)
     @pytest.mark.parametrize("test_type", ["unit", "integration"])
     def test_fixture_nesting(self, app_config, test_type, test_data):
-        """fixture依赖链：base_config → database_config → app_config → generate_test_data"""
+        """fixture依赖链：
+        base_config → database_config → app_config → generate_test_data
+        """
         assert test_data["config"]["port"] == 8080
         assert test_data["type"] == test_type
         assert len(test_data["data"]) == 3
-    
+
     # 测试边界情况：不同的测试类型
     @with_dynamic_params(test_data=generate_test_data)
     @pytest.mark.parametrize("test_type", ["", None, "smoke"])
-    def test_fixture_nesting_edge_cases(self, app_config, test_type, test_data):
+    def test_fixture_nesting_edge_cases(
+        self, app_config, test_type, test_data
+    ):
         """测试边界情况：空和None测试类型"""
         assert test_data["config"]["port"] == 8080
         assert test_data["type"] == test_type

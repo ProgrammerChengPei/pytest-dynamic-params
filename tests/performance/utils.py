@@ -12,19 +12,19 @@ def get_current_memory_usage() -> int:
 
 def measure_memory_usage(func, *args, **kwargs) -> tuple:
     """测量函数执行的内存使用情况
-    
+
     返回：(执行结果, 内存使用增量MB)
     """
     # 执行前内存使用
     before = get_current_memory_usage()
-    
+
     # 执行函数
     result = func(*args, **kwargs)
-    
+
     # 执行后内存使用
     after = get_current_memory_usage()
-    
+
     # 计算内存使用增量
     memory_increase = after - before
-    
+
     return result, memory_increase

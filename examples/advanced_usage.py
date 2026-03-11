@@ -21,9 +21,15 @@ def get_raw_data(data_source, size):
 def process_data(raw_data, algorithm):
     """处理数据生成器，依赖于raw_data"""
     if algorithm == "algo1":
-        return [{"id": item["id"], "processed": item["id"] * 2} for item in raw_data]
+        return [
+            {"id": item["id"], "processed": item["id"] * 2}
+            for item in raw_data
+        ]
     else:
-        return [{"id": item["id"], "processed": item["id"] * 3} for item in raw_data]
+        return [
+            {"id": item["id"], "processed": item["id"] * 3}
+            for item in raw_data
+        ]
 
 
 @param_generator
@@ -43,18 +49,20 @@ def validate_results(processed_data, threshold):
 @pytest.mark.parametrize("algorithm", ["algo1", "algo2"])
 @pytest.mark.parametrize("threshold", [0.5, 8.0])
 def test_dynamic_params_nesting(
-    data_source, size, algorithm, threshold,
-    raw_data, processed_data, is_valid
+    data_source, size, algorithm, threshold, raw_data, processed_data, is_valid
 ):
     """多个动态参数嵌套依赖测试示例"""
     # 验证原始数据
     assert len(raw_data) == size
     assert all(item["source"] == data_source for item in raw_data)
-    
+
     # 验证处理后的数据
     assert len(processed_data) == size
-    assert all(item["id"] == raw_item["id"] for item, raw_item in zip(processed_data, raw_data))
-    
+    assert all(
+        item["id"] == raw_item["id"]
+        for item, raw_item in zip(processed_data, raw_data)
+    )
+
     # 验证结果
     assert isinstance(is_valid, bool)
 
@@ -86,15 +94,17 @@ def session_scoped_data():
 
 class TestScopesUsage:
     """作用域使用测试类示例"""
-    
+
     @with_dynamic_params(
         func_data=function_scoped_data,
         class_data=class_scoped_data,
         mod_data=module_scoped_data,
-        session_data=session_scoped_data
+        session_data=session_scoped_data,
     )
     @pytest.mark.parametrize("input_value", [1, 2])
-    def test_scope_management(self, input_value, func_data, class_data, mod_data, session_data):
+    def test_scope_management(
+        self, input_value, func_data, class_data, mod_data, session_data
+    ):
         """作用域管理测试示例"""
         assert func_data == f"func_{input_value}"
         assert class_data == "class_shared"
@@ -118,16 +128,13 @@ def uncached_data():
     return time.time()
 
 
-@with_dynamic_params(
-    cached_result=cached_data,
-    uncached_result=uncached_data
-)
+@with_dynamic_params(cached_result=cached_data, uncached_result=uncached_data)
 @pytest.mark.parametrize("input_value", [1, 2])
 def test_cache_control(input_value, cached_result, uncached_result):
     """缓存控制测试示例"""
     # 验证缓存结果
     assert cached_result == input_value * 10
-    
+
     # 验证非缓存结果（每次都不同）
     assert isinstance(uncached_result, float)
 
@@ -149,16 +156,13 @@ def eager_data(input_value):
     return input_value * 3
 
 
-@with_dynamic_params(
-    lazy_result=lazy_data,
-    eager_result=eager_data
-)
+@with_dynamic_params(lazy_result=lazy_data, eager_result=eager_data)
 @pytest.mark.parametrize("input_value", [1, 2])
 def test_lazy_loading(input_value, lazy_result, eager_result):
     """懒加载控制测试示例"""
     # 验证懒加载结果
     assert lazy_result == input_value * 5
-    
+
     # 验证非懒加载结果
     assert eager_result == input_value * 3
 

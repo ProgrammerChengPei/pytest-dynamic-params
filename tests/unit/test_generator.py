@@ -6,20 +6,21 @@ from src.dynamic_params.errors import MissingParameterError
 
 class TestParamGenerator:
     """ParamGenerator类的测试类"""
-    
+
     def test_initialization(self):
         """测试ParamGenerator初始化"""
+
         def dummy_func():
             return "test"
-        
+
         generator = ParamGenerator(
             func=dummy_func,
             param_name="test_param",
             scope="function",
             cache_enabled=True,
-            lazy_support=True
+            lazy_support=True,
         )
-        
+
         assert generator.func == dummy_func
         assert generator.param_name == "test_param"
         assert generator.scope == "function"
@@ -29,31 +30,29 @@ class TestParamGenerator:
 
     def test_get_result(self):
         """测试ParamGenerator的get_result方法"""
+
         def simple_func():
             return "result"
-        
-        generator = ParamGenerator(
-            func=simple_func,
-            param_name="test_param"
-        )
-        
+
+        generator = ParamGenerator(func=simple_func, param_name="test_param")
+
         result = generator.get_result({})
         assert result == "result"
 
     def test_with_dependencies(self):
         """测试带依赖的ParamGenerator"""
+
         def dependent_func(param1, param2):
             return f"{param1}_{param2}"
-        
+
         generator = ParamGenerator(
-            func=dependent_func,
-            param_name="test_param"
+            func=dependent_func, param_name="test_param"
         )
-        
+
         # 检查依赖提取是否正确
         expected_deps = {"param1", "param2"}
         assert set(generator.dependencies) == expected_deps
-        
+
         result = generator.get_result({"param1": "hello", "param2": "world"})
         assert result == "hello_world"
 
@@ -61,8 +60,9 @@ class TestParamGenerator:
         """测试ParamGenerator的缓存功能"""
         # 清除 GeneratorRegistry 实例，确保测试环境干净
         from src.dynamic_params.core.registry import GeneratorRegistry
+
         GeneratorRegistry._instance = None
-        
+
         call_count = 0
 
         def counting_func():
@@ -71,9 +71,7 @@ class TestParamGenerator:
             return f"result_{call_count}"
 
         generator = ParamGenerator(
-            func=counting_func,
-            param_name="test_param",
-            cache_enabled=True
+            func=counting_func, param_name="test_param", cache_enabled=True
         )
 
         # 第一次调用
@@ -93,15 +91,14 @@ class TestParamGenerator:
         """测试ParamGenerator的统计信息"""
         # 清除 GeneratorRegistry 实例，确保测试环境干净
         from src.dynamic_params.core.registry import GeneratorRegistry
+
         GeneratorRegistry._instance = None
-        
+
         def simple_func():
             return "result"
 
         generator = ParamGenerator(
-            func=simple_func,
-            param_name="test_param",
-            cache_enabled=True
+            func=simple_func, param_name="test_param", cache_enabled=True
         )
 
         # 初始统计
@@ -127,22 +124,20 @@ class TestParamGenerator:
     def test_cache_disabled(self):
         """测试禁用缓存时的行为"""
         call_count = 0
-        
+
         def counting_func():
             nonlocal call_count
             call_count += 1
             return f"result_{call_count}"
-        
+
         generator = ParamGenerator(
-            func=counting_func,
-            param_name="test_param",
-            cache_enabled=False
+            func=counting_func, param_name="test_param", cache_enabled=False
         )
-        
+
         # 多次调用，每次都应执行函数
         result1 = generator.get_result({})
         result2 = generator.get_result({})
-        
+
         assert result1 == "result_1"
         assert result2 == "result_2"
         assert call_count == 2
@@ -151,28 +146,29 @@ class TestParamGenerator:
         """测试不支持懒加载时的get_result方法"""
         # 清除 GeneratorRegistry 实例，确保测试环境干净
         from src.dynamic_params.core.registry import GeneratorRegistry
+
         GeneratorRegistry._instance = None
-        
+
         def simple_func():
             return "result"
 
         generator = ParamGenerator(
             func=simple_func,
             param_name="test_param",
-            lazy_support=False  # 不支持懒加载
+            lazy_support=False,  # 不支持懒加载
         )
-        
+
         result = generator.get_result({})
         assert result == "result"
 
     def test_missing_parameter_error(self):
         """测试缺少参数时的错误"""
+
         def dependent_func(param1, param2):
             return f"{param1}_{param2}"
 
         generator = ParamGenerator(
-            func=dependent_func,
-            param_name="test_param"
+            func=dependent_func, param_name="test_param"
         )
 
         # 尝试调用时不提供所需参数，应该抛出MissingParameterError
@@ -189,17 +185,15 @@ class TestParamGenerator:
 
     def test_register_input_values(self):
         """测试注册输入值"""
+
         def simple_func():
             return "result"
-        
-        generator = ParamGenerator(
-            func=simple_func,
-            param_name="test_param"
-        )
-        
+
+        generator = ParamGenerator(func=simple_func, param_name="test_param")
+
         # 注册输入值
         test_values = ["value1", "value2", "value3"]
         generator.register_input_values(test_values)
-        
+
         # 检查值是否被正确注册
         assert generator._input_values == test_values

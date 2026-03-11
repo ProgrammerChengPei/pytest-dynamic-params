@@ -2,6 +2,7 @@
 示例3: 参数化fixture
 对应 specs/需求.md 第332-352行的使用示例
 """
+
 import pytest
 
 from dynamic_params import with_dynamic_params
@@ -17,7 +18,7 @@ def environment(request):
 
 class TestParametrizedFixture:
     """测试使用参数化fixture的测试类"""
-    
+
     @with_dynamic_params(config=generate_config)
     @pytest.mark.parametrize("feature_flag", ["A/B", "control"])
     def test_parametrized_fixture(self, environment, feature_flag, config):
@@ -25,11 +26,13 @@ class TestParametrizedFixture:
         assert config["env"] == environment["env"]
         assert config["feature"] == feature_flag
         assert config["timeout"] == environment["timeout"] + 10
-    
+
     # 测试边界情况：空的feature_flag
     @with_dynamic_params(config=generate_config)
     @pytest.mark.parametrize("feature_flag", ["", None])
-    def test_parametrized_fixture_empty_feature(self, environment, feature_flag, config):
+    def test_parametrized_fixture_empty_feature(
+        self, environment, feature_flag, config
+    ):
         """测试空feature_flag的情况"""
         assert config["env"] == environment["env"]
         assert config["feature"] == feature_flag

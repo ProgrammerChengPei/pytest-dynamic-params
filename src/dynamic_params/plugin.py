@@ -9,24 +9,19 @@ from .lazy import LazyResult
 
 def pytest_configure(config):
     """注册markers"""
-    config.addinivalue_line(
-        "markers",
-        "dynamic_param: 使用动态参数的测试"
-    )
-    config.addinivalue_line(
-        "markers",
-        "param_generator: 参数生成器函数"
-    )
-    
+    config.addinivalue_line("markers", "dynamic_param: 使用动态参数的测试")
+    config.addinivalue_line("markers", "param_generator: 参数生成器函数")
+
     # 加载和验证配置
     from .config import DynamicParamConfig
+
     try:
         config_obj = DynamicParamConfig.get_instance()
         config_obj.validate()
         print("pytest-dynamic-params plugin configured with valid config")
     except Exception as e:
         print(f"Warning: Failed to load config: {e}")
-    
+
     print("pytest-dynamic-params plugin configured")
 
     # 注册全局fixture提供器
@@ -58,23 +53,27 @@ def pytest_configure(config):
 
     # 将fixture注册到pytest的全局fixture管理器中
     # 注意：这里我们使用一个通用的fixture，通过参数来区分不同的动态参数
-    dynamic_param_fixture._pytestfixturefunction = pytest.fixture(dynamic_param_fixture)
-    dynamic_param_fixture.__name__ = '_dynamic_param_value'
+    dynamic_param_fixture._pytestfixturefunction = pytest.fixture(
+        dynamic_param_fixture
+    )
+    dynamic_param_fixture.__name__ = "_dynamic_param_value"
 
 
 def pytest_generate_tests(metafunc):
     """pytest钩子：生成测试参数"""
     print(f"Checking {metafunc.function.__name__} for dynamic params")
     # 检查是否需要动态参数
-    if not hasattr(metafunc.function, '_requires_dynamic_params'):
+    if not hasattr(metafunc.function, "_requires_dynamic_params"):
         print(f"No dynamic params found in {metafunc.function.__name__}")
         return
 
     # 获取参数映射
-    param_mapping = getattr(metafunc.function, '_dynamic_param_mapping', {})
+    param_mapping = getattr(metafunc.function, "_dynamic_param_mapping", {})
 
     if not param_mapping:
-        print(f"No dynamic param mapping found in {metafunc.function.__name__}")
+        print(
+            f"No dynamic param mapping found in {metafunc.function.__name__}"
+        )
         return
 
     # 获取注册表实例
@@ -90,12 +89,12 @@ def pytest_generate_tests(metafunc):
         generators.append(generator)
 
     # 解析依赖顺序
-    ordered_generators = resolve_dependency_order(generators)
+    resolve_dependency_order(generators)
 
     # 处理参数化fixture：我们需要确保为每个fixture参数值生成动态参数
     # 这里我们使用indirect参数，让pytest通过fixture来处理动态参数
     param_names = list(param_mapping.keys())
-    
+
     # 为每个动态参数创建fixture（如果还没有）
     for param_name in param_names:
         if param_name not in metafunc.fixturenames:
@@ -116,11 +115,11 @@ def pytest_generate_tests(metafunc):
 def pytest_runtest_setup(item):
     """在测试运行前设置动态参数"""
     # 检查测试函数是否需要动态参数
-    test_func = getattr(item, 'function', None)
-    if not test_func or not hasattr(test_func, '_requires_dynamic_params'):
+    test_func = getattr(item, "function", None)
+    if not test_func or not hasattr(test_func, "_requires_dynamic_params"):
         return
 
-    param_mapping = getattr(test_func, '_dynamic_param_mapping', {})
+    param_mapping = getattr(test_func, "_dynamic_param_mapping", {})
     if not param_mapping:
         return
 
@@ -132,14 +131,14 @@ def pytest_runtest_setup(item):
 def pytest_runtest_call(item):
     """在测试调用前处理动态参数"""
     # 检查是否需要处理动态参数
-    if not getattr(item, '_needs_dynamic_params', False):
+    if not getattr(item, "_needs_dynamic_params", False):
         return
 
-    test_func = getattr(item, 'function', None)
+    test_func = getattr(item, "function", None)
     if not test_func:
         return
 
-    param_mapping = getattr(test_func, '_dynamic_param_mapping', {})
+    param_mapping = getattr(test_func, "_dynamic_param_mapping", {})
     if not param_mapping:
         return
 
@@ -159,21 +158,21 @@ def pytest_runtest_call(item):
         generators.append(generator)
         # 生成器的param_name就是test_param_name
         param_name_map[generator.param_name] = test_param_name
-    
+
     # 解析依赖顺序
     ordered_generators = resolve_dependency_order(generators)
 
     # 收集fixture上下文 - 此时fixture已经被解析了
     context = {}
-    request = getattr(item, '_request', None)
+    request = getattr(item, "_request", None)
     if request:
         # 收集所有fixture值（包括参数化fixture）
-        for fixturename in getattr(item, 'fixturenames', []):
+        for fixturename in getattr(item, "fixturenames", []):
             try:
                 context[fixturename] = request.getfixturevalue(fixturename)
             except pytest.FixtureLookupError:
                 pass
-        
+
         # 收集静态参数（来自@pytest.mark.parametrize）
         for param_name, value in request.node.funcargs.items():
             if param_name not in context:
@@ -185,12 +184,12 @@ def pytest_runtest_call(item):
         try:
             # 准备上下文 - 包括已生成的动态参数
             generator_context = context.copy()
-            
+
             # 首先添加已经生成的动态参数到上下文
-            if hasattr(item, 'funcargs'):
+            if hasattr(item, "funcargs"):
                 for existing_param, value in item.funcargs.items():
                     generator_context[existing_param] = value
-                    
+
                     # 检查是否有生成器依赖这个参数
                     # 例如：生成器函数level2依赖level1，但测试函数中使用l1作为参数名
                     # 我们需要将l1的值也添加到level1键下，供生成器使用
@@ -200,7 +199,7 @@ def pytest_runtest_call(item):
                             # 但生成器函数内部使用的参数名可能不同
                             # 我们需要确保生成器函数能够找到它需要的参数
                             pass
-            
+
             # 特殊处理：对于生成器之间的依赖，我们需要确保依赖的参数名正确
             # 例如：level2生成器依赖level1参数，但测试函数中可能使用l1作为参数名
             # 我们需要检查当前生成器的依赖，看看是否有对应的动态参数
@@ -210,9 +209,11 @@ def pytest_runtest_call(item):
                     if gen.param_name == dep:
                         # 找到对应的生成器，它的结果应该已经在funcargs中
                         if gen.param_name in item.funcargs:
-                            generator_context[dep] = item.funcargs[gen.param_name]
+                            generator_context[dep] = item.funcargs[
+                                gen.param_name
+                            ]
                         break
-            
+
             # 确保所有依赖都在上下文中
             # 对于尚未生成的依赖，它们应该在ordered_generators的前面
 
@@ -222,7 +223,7 @@ def pytest_runtest_call(item):
                 result = result.execute()
 
             # 直接修改funcargs - pytest会用这个来调用测试函数
-            if not hasattr(item, 'funcargs'):
+            if not hasattr(item, "funcargs"):
                 item.funcargs = {}
             item.funcargs[param_name] = result
             # 将结果添加到上下文，供后续生成器使用
@@ -236,23 +237,27 @@ def pytest_runtest_call(item):
         except Exception as e:
             # 提供更详细的错误信息
             import traceback
+
             error_msg = f"Error generating parameter '{param_name}': {str(e)}"
             error_msg += f"\nGenerator: {generator.func.__name__}"
             error_msg += f"\nDependencies: {generator.dependencies}"
             error_msg += f"\nAvailable context: {list(context.keys())}"
             error_msg += f"\nTraceback: {traceback.format_exc()}"
             print(error_msg)
-            
+
             # 对于错误处理测试，我们需要返回None而不是抛出异常
             # 这样测试用例可以验证错误处理逻辑
-            if hasattr(item, 'funcargs'):
+            if hasattr(item, "funcargs"):
                 item.funcargs[param_name] = None
                 context[param_name] = None
             # 继续执行，不抛出异常
 
 
-def _create_lazy_fixture_for_module(param_name: str, generator_func: Callable, metafunc):
+def _create_lazy_fixture_for_module(
+    param_name: str, generator_func: Callable, metafunc
+):
     """为懒加载参数创建pytest fixture并注册到模块"""
+
     # 创建fixture函数
     def lazy_fixture(request):
         registry = GeneratorRegistry.get_instance()
@@ -264,7 +269,7 @@ def _create_lazy_fixture_for_module(param_name: str, generator_func: Callable, m
         # 收集上下文
         context = {}
         for dep in generator.dependencies:
-            if hasattr(request, 'getfixturevalue'):
+            if hasattr(request, "getfixturevalue"):
                 try:
                     context[dep] = request.getfixturevalue(dep)
                 except pytest.FixtureLookupError:

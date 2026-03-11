@@ -4,6 +4,7 @@
 def get_function_signature(func) -> str:
     """获取函数签名字符串"""
     import inspect
+
     sig = inspect.signature(func)
     return f"{func.__name__}{sig}"
 
