@@ -45,9 +45,7 @@ class TestParamGenerator:
         def dependent_func(param1, param2):
             return f"{param1}_{param2}"
 
-        generator = ParamGenerator(
-            func=dependent_func, param_name="test_param"
-        )
+        generator = ParamGenerator(func=dependent_func, param_name="test_param")
 
         # 检查依赖提取是否正确
         expected_deps = {"param1", "param2"}
@@ -167,9 +165,7 @@ class TestParamGenerator:
         def dependent_func(param1, param2):
             return f"{param1}_{param2}"
 
-        generator = ParamGenerator(
-            func=dependent_func, param_name="test_param"
-        )
+        generator = ParamGenerator(func=dependent_func, param_name="test_param")
 
         # 尝试调用时不提供所需参数，应该抛出MissingParameterError
         try:

@@ -1,6 +1,6 @@
-import os
 import configparser
-from typing import Dict, Any, Optional
+import os
+from typing import Any, Dict, Optional
 
 from .errors import ConfigurationError
 
@@ -19,10 +19,7 @@ class DynamicParamConfig:
             "dir": ".pytest_cache/dynamic_params",
         },
         "validation": {"level": "strict", "log_level": "INFO"},
-        "performance": {
-            "lazy_loading": "true",
-            "incremental_generation": "true"
-        },
+        "performance": {"lazy_loading": "true", "incremental_generation": "true"},
         "debug": {"enabled": "false", "profile": "false"},
     }
 
@@ -73,8 +70,7 @@ class DynamicParamConfig:
             "PYTEST_DYNAMIC_PARAM_VALIDATION": "validation.level",
             "PYTEST_DYNAMIC_PARAM_LOG_LEVEL": "validation.log_level",
             "PYTEST_DYNAMIC_PARAM_LAZY_LOADING": "performance.lazy_loading",
-            "PYTEST_DYNAMIC_PARAM_INCREMENTAL":
-                "performance.incremental_generation",
+            "PYTEST_DYNAMIC_PARAM_INCREMENTAL": "performance.incremental_generation",
             "PYTEST_DYNAMIC_PARAM_DEBUG": "debug.enabled",
             "PYTEST_DYNAMIC_PARAM_PROFILE": "debug.profile",
             "PYTEST_DYNAMIC_PARAM_CACHE_DIR": "cache.dir",
@@ -88,13 +84,9 @@ class DynamicParamConfig:
                         config[section] = {}
                     config[section][option] = os.environ[env_var]
                 except Exception as e:
-                    print(
-                        f"Warning: Failed to update config from {env_var}: {e}"
-                    )
+                    print(f"Warning: Failed to update config from {env_var}: {e}")
 
-    def _normalize_config(
-        self, config: configparser.ConfigParser
-    ) -> Dict[str, Any]:
+    def _normalize_config(self, config: configparser.ConfigParser) -> Dict[str, Any]:
         """标准化配置值"""
         normalized = {}
 
@@ -104,8 +96,7 @@ class DynamicParamConfig:
                 try:
                     # 转换布尔值
                     if value.lower() in ("true", "false"):
-                        normalized[section][key] = \
-                            config[section].getboolean(key)
+                        normalized[section][key] = config[section].getboolean(key)
                     # 转换整数
                     elif value.isdigit():
                         normalized[section][key] = config[section].getint(key)
@@ -120,9 +111,7 @@ class DynamicParamConfig:
 
         return normalized
 
-    def get(
-        self, section: str, option: str, default: Optional[Any] = ...
-    ) -> Any:
+    def get(self, section: str, option: str, default: Optional[Any] = ...) -> Any:
         """获取配置值"""
         try:
             if section not in self._config:
@@ -163,9 +152,7 @@ class DynamicParamConfig:
             valid_log_levels = ["DEBUG", "INFO", "WARNING", "ERROR"]
             if self.get("validation", "log_level") not in valid_log_levels:
                 raise ConfigurationError(
-                    "validation.log_level",
-                    self.get("validation", "log_level"),
-                    str
+                    "validation.log_level", self.get("validation", "log_level"), str
                 )
 
             return True

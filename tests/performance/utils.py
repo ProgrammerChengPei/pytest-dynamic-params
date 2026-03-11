@@ -1,7 +1,8 @@
 """性能测试工具模块"""
 
-import psutil
 import os
+
+import psutil
 
 
 def get_current_memory_usage() -> int:

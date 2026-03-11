@@ -9,9 +9,7 @@ class _ParamGeneratorDecorator:
     参数生成器装饰器类
     """
 
-    def __init__(
-        self, scope: str = "function", cache: bool = True, lazy: bool = True
-    ):
+    def __init__(self, scope: str = "function", cache: bool = True, lazy: bool = True):
         self.scope = scope
         self.cache_enabled = cache
         self.lazy_support = lazy
@@ -39,10 +37,7 @@ class _ParamGeneratorDecorator:
 
 
 def param_generator(
-    func_or_scope=None,
-    scope: str = "function",
-    cache: bool = True,
-    lazy: bool = True
+    func_or_scope=None, scope: str = "function", cache: bool = True, lazy: bool = True
 ):
     """
     参数生成器装饰器，支持两种用法:
@@ -52,17 +47,13 @@ def param_generator(
     # 如果第一个参数是可调用的，说明是 @param_generator 用法
     if callable(func_or_scope):
         # 直接装饰函数
-        decorator = _ParamGeneratorDecorator(
-            scope=scope, cache=cache, lazy=lazy
-        )
+        decorator = _ParamGeneratorDecorator(scope=scope, cache=cache, lazy=lazy)
         return decorator(func_or_scope)
     else:
         # 是 @param_generator() 或 @param_generator(scope="...") 用法
         # 返回配置好的装饰器实例
         actual_scope = func_or_scope if func_or_scope is not None else scope
-        return _ParamGeneratorDecorator(
-            scope=actual_scope, cache=cache, lazy=lazy
-        )
+        return _ParamGeneratorDecorator(scope=actual_scope, cache=cache, lazy=lazy)
 
 
 def with_dynamic_params(**param_mapping: Callable):
@@ -76,12 +67,9 @@ def with_dynamic_params(**param_mapping: Callable):
 
             # Verify generator is properly decorated
             if not hasattr(generator_func, "_is_param_generator"):
-                func_name = getattr(
-                    generator_func, "__name__", str(generator_func)
-                )
+                func_name = getattr(generator_func, "__name__", str(generator_func))
                 raise ValueError(
-                    f"Function {func_name} must be decorated "
-                    f"with @param_generator"
+                    f"Function {func_name} must be decorated " f"with @param_generator"
                 )
 
         # Initialize dynamic param attributes on test function
@@ -90,9 +78,7 @@ def with_dynamic_params(**param_mapping: Callable):
 
         # Mark function as dynamic param test
         test_func.pytestmark = getattr(test_func, "pytestmark", [])
-        test_func.pytestmark.append(
-            pytest.mark.dynamic_param
-        )
+        test_func.pytestmark.append(pytest.mark.dynamic_param)
 
         @functools.wraps(test_func)
         def wrapper(*args, **kwargs):

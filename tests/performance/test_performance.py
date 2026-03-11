@@ -2,17 +2,17 @@
 性能测试用例 - 测试pytest-dynamic-params插件的性能特征
 """
 
-import random
 import platform
+import random
 
 import pytest
 
 from src.dynamic_params import param_generator, with_dynamic_params
 from tests.utils import (
+    TestClass,
     measure_execution_time,
     run_with_gc,
     validate_performance_threshold,
-    TestClass,
 )
 
 # 设置固定的随机种子，确保测试可重复性
@@ -183,9 +183,7 @@ class TestPerformance:
                     test_memory(n, list(range(n)))
 
         # 运行测试并进行垃圾回收
-        execution_time, _ = measure_execution_time(
-            lambda: run_with_gc(run_test)
-        )
+        execution_time, _ = measure_execution_time(lambda: run_with_gc(run_test))
         validate_performance_threshold(execution_time, 2.0, "内存稳定性测试")
 
     def test_concurrent_access_simulation(self):
@@ -232,10 +230,7 @@ class TestPerformance:
 
         # 测试字符串参数
         @with_dynamic_params(uppercase=process_string)
-        @pytest.mark.parametrize(
-            "s",
-            ["test", "performance", "dynamic", "parameter"]
-        )
+        @pytest.mark.parametrize("s", ["test", "performance", "dynamic", "parameter"])
         def test_string_params(s, uppercase):
             assert uppercase == s.upper()
 
@@ -248,10 +243,7 @@ class TestPerformance:
 
         # 测试对象参数
         @with_dynamic_params(processed=process_object)
-        @pytest.mark.parametrize(
-            "obj",
-            [TestClass(1), TestClass(2), TestClass(3)]
-        )
+        @pytest.mark.parametrize("obj", [TestClass(1), TestClass(2), TestClass(3)])
         def test_object_params(obj, processed):
             assert processed == obj.value * 3
 

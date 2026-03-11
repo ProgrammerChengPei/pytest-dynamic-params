@@ -1,6 +1,6 @@
 """错误处理模块"""
 
-from typing import List, Dict, Any
+from typing import Any, Dict, List
 
 
 class DynamicParamError(Exception):
@@ -55,10 +55,7 @@ class ExecutionError(DynamicParamError):
     """生成器执行异常"""
 
     def __init__(
-        self,
-        generator_name: str,
-        exception: Exception,
-        context: Dict[str, Any]
+        self, generator_name: str, exception: Exception, context: Dict[str, Any]
     ):
         self.generator_name = generator_name
         self.exception = exception
@@ -75,9 +72,7 @@ class ExecutionError(DynamicParamError):
 class ConfigurationError(DynamicParamError):
     """配置错误异常"""
 
-    def __init__(
-        self, config_key: str, config_value: Any, expected_type: type
-    ):
+    def __init__(self, config_key: str, config_value: Any, expected_type: type):
         self.config_key = config_key
         self.config_value = config_value
         self.expected_type = expected_type

@@ -28,9 +28,7 @@ class TestGeneratorParamDependencies:
     @pytest.mark.parametrize("seed_value", [1, 2])
     @pytest.mark.parametrize("multiplier", [10, 20])
     @pytest.mark.parametrize("offset", [5, 15])
-    def test_generator_param_dependencies(
-        self, seed_value, multiplier, offset, calc
-    ):
+    def test_generator_param_dependencies(self, seed_value, multiplier, offset, calc):
         """测试参数生成器对静态参数的依赖：
         seed_value/multiplier/offset → complex_calculation
         """

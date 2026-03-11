@@ -3,12 +3,12 @@
 import pytest
 
 from src.dynamic_params.errors import (
+    CircularDependencyError,
+    ConfigurationError,
     DynamicParamError,
+    ExecutionError,
     InvalidGeneratorError,
     MissingParameterError,
-    CircularDependencyError,
-    ExecutionError,
-    ConfigurationError,
 )
 
 
@@ -154,9 +154,7 @@ class TestConfigurationError:
     def test_initialization(self):
         """测试ConfigurationError初始化"""
         error = ConfigurationError(
-            config_key="cache.enabled",
-            config_value="not a boolean",
-            expected_type=bool
+            config_key="cache.enabled", config_value="not a boolean", expected_type=bool
         )
 
         assert error.config_key == "cache.enabled"
@@ -166,9 +164,7 @@ class TestConfigurationError:
     def test_error_message(self):
         """测试ConfigurationError错误消息"""
         error = ConfigurationError(
-            config_key="cache.enabled",
-            config_value="not a boolean",
-            expected_type=bool
+            config_key="cache.enabled", config_value="not a boolean", expected_type=bool
         )
 
         message = str(error)
@@ -179,9 +175,7 @@ class TestConfigurationError:
     def test_inheritance(self):
         """测试ConfigurationError继承关系"""
         error = ConfigurationError(
-            config_key="cache.enabled",
-            config_value="not a boolean",
-            expected_type=bool
+            config_key="cache.enabled", config_value="not a boolean", expected_type=bool
         )
 
         assert isinstance(error, DynamicParamError)

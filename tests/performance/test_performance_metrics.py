@@ -120,11 +120,7 @@ class TestPerformanceMetrics:
             return level4 + 5
 
         @with_dynamic_params(
-            level1=level1,
-            level2=level2,
-            level3=level3,
-            level4=level4,
-            level5=level5
+            level1=level1, level2=level2, level3=level3, level4=level4, level5=level5
         )
         def test_complex_chain(x, level1, level2, level3, level4, level5):
             assert level1 == x + 1
@@ -161,9 +157,7 @@ class TestPerformanceMetrics:
                 for x in range(10):
                     test_stable_func(x, x * 10)
 
-        execution_time, _ = measure_execution_time(
-            lambda: run_with_gc(run_test)
-        )
+        execution_time, _ = measure_execution_time(lambda: run_with_gc(run_test))
         validate_performance_threshold(execution_time, 3.0, "长时间运行稳定性测试")
 
     def test_generator_initialization_performance(self):

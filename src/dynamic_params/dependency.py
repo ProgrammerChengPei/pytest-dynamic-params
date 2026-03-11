@@ -6,9 +6,7 @@ from .core.generator import ParamGenerator
 from .errors import CircularDependencyError
 
 
-def resolve_dependency_order(
-    generators: List[ParamGenerator]
-) -> List[ParamGenerator]:
+def resolve_dependency_order(generators: List[ParamGenerator]) -> List[ParamGenerator]:
     """解析生成器依赖顺序，使用拓扑排序并检测循环依赖"""
     # 构建依赖图
     graph: Dict[str, Set[str]] = {}

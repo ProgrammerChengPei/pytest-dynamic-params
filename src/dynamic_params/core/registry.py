@@ -1,9 +1,9 @@
 """参数生成器注册表模块"""
 
-from typing import List, Optional, Callable
+from typing import Callable, List, Optional
 
-from .generator import ParamGenerator
 from ..errors import InvalidGeneratorError
+from .generator import ParamGenerator
 
 
 class GeneratorRegistry:
@@ -58,9 +58,7 @@ class GeneratorRegistry:
                 return True
         return False
 
-    def register(
-        self, generator_func: Callable, param_name: str
-    ) -> ParamGenerator:
+    def register(self, generator_func: Callable, param_name: str) -> ParamGenerator:
         """注册生成器函数
 
         参数:

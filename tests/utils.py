@@ -3,12 +3,14 @@
 提供共享的测试工具函数和fixture
 """
 
-import pytest
-import time
 import gc
-import psutil
 import os
-from typing import Callable, Any, Dict, List
+import time
+from typing import Any, Callable, Dict, List
+
+import psutil
+import pytest
+
 from dynamic_params import param_generator
 
 
@@ -83,9 +85,7 @@ def assert_lazy_result(result, expected_value):
 
 
 # 性能测试工具函数
-def measure_execution_time(
-    func: Callable, *args, **kwargs
-) -> tuple[float, Any]:
+def measure_execution_time(func: Callable, *args, **kwargs) -> tuple[float, Any]:
     """
     测量函数执行时间
 
@@ -130,9 +130,7 @@ def generate_test_data() -> Dict[str, List[Any]]:
     """
     return {
         "numbers": [1, 2, 3, 4, 5, 10, 50, 100],
-        "strings": [
-            "test", "performance", "dynamic", "parameter", "benchmark"
-        ],
+        "strings": ["test", "performance", "dynamic", "parameter", "benchmark"],
         "dictionaries": [
             {"a": 1, "b": 2},
             {"x": 10, "y": 20},

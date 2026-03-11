@@ -4,8 +4,9 @@
 此文件包含pytest-dynamic-params插件的高级使用示例
 """
 
-import pytest
 import time
+
+import pytest
 
 from dynamic_params import param_generator, with_dynamic_params
 
@@ -21,15 +22,9 @@ def get_raw_data(data_source, size):
 def process_data(raw_data, algorithm):
     """处理数据生成器，依赖于raw_data"""
     if algorithm == "algo1":
-        return [
-            {"id": item["id"], "processed": item["id"] * 2}
-            for item in raw_data
-        ]
+        return [{"id": item["id"], "processed": item["id"] * 2} for item in raw_data]
     else:
-        return [
-            {"id": item["id"], "processed": item["id"] * 3}
-            for item in raw_data
-        ]
+        return [{"id": item["id"], "processed": item["id"] * 3} for item in raw_data]
 
 
 @param_generator
@@ -40,9 +35,7 @@ def validate_results(processed_data, threshold):
 
 
 @with_dynamic_params(
-    raw_data=get_raw_data,
-    processed_data=process_data,
-    is_valid=validate_results
+    raw_data=get_raw_data, processed_data=process_data, is_valid=validate_results
 )
 @pytest.mark.parametrize("data_source", ["api", "database"])
 @pytest.mark.parametrize("size", [5, 10])
@@ -59,8 +52,7 @@ def test_dynamic_params_nesting(
     # 验证处理后的数据
     assert len(processed_data) == size
     assert all(
-        item["id"] == raw_item["id"]
-        for item, raw_item in zip(processed_data, raw_data)
+        item["id"] == raw_item["id"] for item, raw_item in zip(processed_data, raw_data)
     )
 
     # 验证结果

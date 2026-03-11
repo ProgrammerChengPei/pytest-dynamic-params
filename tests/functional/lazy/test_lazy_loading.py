@@ -4,6 +4,7 @@
 """
 
 import pytest
+
 from dynamic_params import param_generator, with_dynamic_params
 
 
@@ -44,10 +45,7 @@ class TestLazyLoading:
         # 验证结果直接是计算值
         assert result == 4
 
-    @with_dynamic_params(
-        lazy_result=lazy_generator,
-        eager_result=eager_generator
-    )
+    @with_dynamic_params(lazy_result=lazy_generator, eager_result=eager_generator)
     @pytest.mark.parametrize("value", [2])
     def test_mixed_loading(self, value, lazy_result, eager_result):
         """测试混合加载模式"""

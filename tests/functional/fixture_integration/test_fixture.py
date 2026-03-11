@@ -43,9 +43,7 @@ class TestFixtureEdgeCases:
     # 测试错误情况：不存在的用户类型
     @with_dynamic_params(user_data=get_user_data)
     @pytest.mark.parametrize("user_type", ["guest"])
-    def test_fixture_nonexistent_user(
-        self, empty_database, user_type, user_data
-    ):
+    def test_fixture_nonexistent_user(self, empty_database, user_type, user_data):
         """测试不存在的用户类型"""
         # 这里期望get_user_data会处理这种情况
         # 假设get_user_data会返回None或抛出异常

@@ -44,9 +44,7 @@ class TestNestedFixtures:
     # 测试边界情况：不同的测试类型
     @with_dynamic_params(test_data=generate_test_data)
     @pytest.mark.parametrize("test_type", ["", None, "smoke"])
-    def test_fixture_nesting_edge_cases(
-        self, app_config, test_type, test_data
-    ):
+    def test_fixture_nesting_edge_cases(self, app_config, test_type, test_data):
         """测试边界情况：空和None测试类型"""
         assert test_data["config"]["port"] == 8080
         assert test_data["type"] == test_type

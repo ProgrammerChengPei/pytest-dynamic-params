@@ -4,6 +4,7 @@
 """
 
 import time
+
 from dynamic_params import param_generator, with_dynamic_params
 
 
@@ -26,10 +27,7 @@ def function_data(session_data, worker_id):
 class TestXdistCompatibility:
     """测试与pytest-xdist兼容性的测试类"""
 
-    @with_dynamic_params(
-        session_data=session_data,
-        function_data=function_data
-    )
+    @with_dynamic_params(session_data=session_data, function_data=function_data)
     def test_xdist_compatibility(self, session_data, function_data, worker_id):
         """测试与 pytest-xdist 的兼容性"""
         # 验证 session 数据在所有 worker 中相同

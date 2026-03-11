@@ -2,7 +2,7 @@
 集中管理所有懒加载和性能优化相关实现
 """
 
-from typing import Any, Dict, List, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Dict, List
 
 if TYPE_CHECKING:
     from .core.generator import ParamGenerator
@@ -12,10 +12,7 @@ class LazyResult:
     """懒加载结果包装器"""
 
     def __init__(
-        self,
-        generator: "ParamGenerator",
-        context: Dict[str, Any],
-        cache_key: str
+        self, generator: "ParamGenerator", context: Dict[str, Any], cache_key: str
     ):
         self.generator = generator
         self.context = context

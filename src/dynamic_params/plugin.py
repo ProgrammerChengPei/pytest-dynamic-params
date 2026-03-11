@@ -53,9 +53,7 @@ def pytest_configure(config):
 
     # 将fixture注册到pytest的全局fixture管理器中
     # 注意：这里我们使用一个通用的fixture，通过参数来区分不同的动态参数
-    dynamic_param_fixture._pytestfixturefunction = pytest.fixture(
-        dynamic_param_fixture
-    )
+    dynamic_param_fixture._pytestfixturefunction = pytest.fixture(dynamic_param_fixture)
     dynamic_param_fixture.__name__ = "_dynamic_param_value"
 
 
@@ -71,9 +69,7 @@ def pytest_generate_tests(metafunc):
     param_mapping = getattr(metafunc.function, "_dynamic_param_mapping", {})
 
     if not param_mapping:
-        print(
-            f"No dynamic param mapping found in {metafunc.function.__name__}"
-        )
+        print(f"No dynamic param mapping found in {metafunc.function.__name__}")
         return
 
     # 获取注册表实例
@@ -209,9 +205,7 @@ def pytest_runtest_call(item):
                     if gen.param_name == dep:
                         # 找到对应的生成器，它的结果应该已经在funcargs中
                         if gen.param_name in item.funcargs:
-                            generator_context[dep] = item.funcargs[
-                                gen.param_name
-                            ]
+                            generator_context[dep] = item.funcargs[gen.param_name]
                         break
 
             # 确保所有依赖都在上下文中

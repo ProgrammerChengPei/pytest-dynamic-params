@@ -18,9 +18,7 @@ class TestNestedDynamicParams:
     """测试嵌套动态参数的测试类"""
 
     @with_dynamic_params(
-        raw_data=get_raw_data,
-        processed_data=process_data,
-        is_valid=validate_results
+        raw_data=get_raw_data, processed_data=process_data, is_valid=validate_results
     )
     @pytest.mark.parametrize("data_source", ["api", "database"])
     @pytest.mark.parametrize("size", [5, 10])
@@ -47,26 +45,18 @@ class TestNestedDynamicParams:
 
         # 验证处理后的数据
         assert len(processed_data) == size
-        assert all(
-            item["id"] == i + 1 for i, item in enumerate(processed_data)
-        )
+        assert all(item["id"] == i + 1 for i, item in enumerate(processed_data))
         if algorithm == "algo1":
-            assert all(
-                item["processed"] == item["id"] * 2 for item in processed_data
-            )
+            assert all(item["processed"] == item["id"] * 2 for item in processed_data)
         else:
-            assert all(
-                item["processed"] == item["id"] * 3 for item in processed_data
-            )
+            assert all(item["processed"] == item["id"] * 3 for item in processed_data)
 
         # 验证结果
         assert isinstance(is_valid, bool)
 
     # 测试边界情况：空数据源和零大小
     @with_dynamic_params(
-        raw_data=get_raw_data,
-        processed_data=process_data,
-        is_valid=validate_results
+        raw_data=get_raw_data, processed_data=process_data, is_valid=validate_results
     )
     @pytest.mark.parametrize("data_source", ["", None])
     @pytest.mark.parametrize("size", [0])
@@ -99,9 +89,7 @@ class TestNestedDynamicParams:
 
     # 测试更多算法类型
     @with_dynamic_params(
-        raw_data=get_raw_data,
-        processed_data=process_data,
-        is_valid=validate_results
+        raw_data=get_raw_data, processed_data=process_data, is_valid=validate_results
     )
     @pytest.mark.parametrize("data_source", ["api"])
     @pytest.mark.parametrize("size", [2])

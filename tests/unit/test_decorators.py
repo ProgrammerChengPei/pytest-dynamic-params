@@ -14,11 +14,7 @@ class TestParamGeneratorDecorator:
 
     def test_initialization(self):
         """测试_ParamGeneratorDecorator初始化"""
-        decorator = _ParamGeneratorDecorator(
-            scope="session",
-            cache=False,
-            lazy=False
-        )
+        decorator = _ParamGeneratorDecorator(scope="session", cache=False, lazy=False)
 
         assert decorator.scope == "session"
         assert decorator.cache_enabled is False
@@ -34,11 +30,7 @@ class TestParamGeneratorDecorator:
 
     def test_call(self):
         """测试_ParamGeneratorDecorator调用"""
-        decorator = _ParamGeneratorDecorator(
-            scope="class",
-            cache=False,
-            lazy=True
-        )
+        decorator = _ParamGeneratorDecorator(scope="class", cache=False, lazy=True)
 
         def sample_func(x):
             return x * 2
@@ -55,11 +47,7 @@ class TestParamGeneratorDecorator:
 
     def test_function_wrapping(self):
         """测试装饰器功能包装"""
-        decorator = _ParamGeneratorDecorator(
-            scope="module",
-            cache=True,
-            lazy=False
-        )
+        decorator = _ParamGeneratorDecorator(scope="module", cache=True, lazy=False)
 
         def sample_func():
             return "test_result"
@@ -106,11 +94,7 @@ class TestParamGenerator:
         def sample_func():
             return "test"
 
-        decorated_func = param_generator(
-            scope="class",
-            cache=False,
-            lazy=False
-        )(
+        decorated_func = param_generator(scope="class", cache=False, lazy=False)(
             sample_func
         )
 
@@ -136,18 +120,16 @@ class TestWithDynamicParams:
             return f"result: {dynamic_param}"
 
         # 使用with_dynamic_params装饰测试函数
-        decorated_func = with_dynamic_params(
-            dynamic_param=sample_generator
-        )(test_func)
+        decorated_func = with_dynamic_params(dynamic_param=sample_generator)(test_func)
 
         # 验证装饰后的函数具有正确的属性
         assert hasattr(decorated_func, "_dynamic_param_mapping")
         assert hasattr(decorated_func, "_requires_dynamic_params")
         assert decorated_func._requires_dynamic_params is True
         assert "dynamic_param" in decorated_func._dynamic_param_mapping
-        assert decorated_func._dynamic_param_mapping[
-            "dynamic_param"
-        ] == sample_generator
+        assert (
+            decorated_func._dynamic_param_mapping["dynamic_param"] == sample_generator
+        )
 
     def test_decorator_validation(self):
         """测试with_dynamic_params装饰器验证功能"""
@@ -186,10 +168,7 @@ class TestWithDynamicParams:
         def test_func(param1, param2):
             return f"{param1}, {param2}"
 
-        decorated_func = with_dynamic_params(
-            param1=generator1,
-            param2=generator2
-        )(
+        decorated_func = with_dynamic_params(param1=generator1, param2=generator2)(
             test_func
         )
 
@@ -209,9 +188,7 @@ class TestWithDynamicParams:
             return f"result: {dynamic_param}"
 
         # 使用with_dynamic_params装饰测试函数
-        decorated_func = with_dynamic_params(
-            dynamic_param=sample_generator
-        )(test_func)
+        decorated_func = with_dynamic_params(dynamic_param=sample_generator)(test_func)
 
         # 验证装饰后的函数保持原始名称
         assert decorated_func.__name__ == test_func.__name__

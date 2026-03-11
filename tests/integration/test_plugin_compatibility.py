@@ -4,6 +4,7 @@
 """
 
 import pytest
+
 from dynamic_params import param_generator, with_dynamic_params
 
 

@@ -5,7 +5,7 @@
 
 import pytest
 
-from dynamic_params import with_dynamic_params, param_generator
+from dynamic_params import param_generator, with_dynamic_params
 from tests.utils import assert_error_message, failing_generator
 
 

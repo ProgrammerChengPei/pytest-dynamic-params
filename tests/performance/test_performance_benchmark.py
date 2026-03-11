@@ -119,18 +119,12 @@ class TestPerformanceBenchmark:
         @with_dynamic_params(output=complex_gen)
         @pytest.mark.parametrize("x", list(range(10)))  # 减少数量以避免过长时间
         def test_complex_gen_perf(x, output):
-            expected = [
-                sum(j * j for j in range(i + 1))
-                for i in range(min(x, 20))
-            ]
+            expected = [sum(j * j for j in range(i + 1)) for i in range(min(x, 20))]
             assert output == expected
 
         start_time = time.perf_counter()
         for x in range(10):
-            expected = [
-                sum(j * j for j in range(i + 1))
-                for i in range(min(x, 20))
-            ]
+            expected = [sum(j * j for j in range(i + 1)) for i in range(min(x, 20))]
             test_complex_gen_perf(x, expected)
         complex_time = time.perf_counter() - start_time
 

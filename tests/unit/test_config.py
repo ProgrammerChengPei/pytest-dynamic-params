@@ -86,11 +86,7 @@ class TestDynamicParamConfig:
     def test_with_config_file(self):
         """测试从配置文件加载配置"""
         # 创建临时配置文件
-        with tempfile.NamedTemporaryFile(
-            mode="w",
-            suffix=".ini",
-            delete=False
-        ) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".ini", delete=False) as f:
             f.write("[cache]\nenabled = false\nsize_function = 2000\n")
             temp_config_file = f.name
 
