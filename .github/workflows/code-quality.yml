@@ -2,9 +2,10 @@ name: Code Quality
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ main ]  # 只监听 main 分支的推送
+    tags: [ 'v*' ]      # 监听标签推送
   pull_request:
-    branches: [ main, develop ]
+    branches: [ main, develop ]  # 监听 main 和 develop 分支的 PR
 
 jobs:
   test:
