@@ -18,7 +18,7 @@ class _ParamGeneratorDecorator:
         """
         装饰器调用入口
         """
-        # 添加类型标记（供with_dynamic_params验证）
+        # 添加类型标记（供dynamic_params验证）
         func._is_param_generator = True  # type: ignore[attr-defined]
         func._scope = self.scope  # type: ignore[attr-defined]
         func._cache_enabled = self.cache_enabled  # type: ignore[attr-defined]
@@ -56,7 +56,7 @@ def param_generator(
         return _ParamGeneratorDecorator(scope=actual_scope, cache=cache, lazy=lazy)
 
 
-def with_dynamic_params(**param_mapping: Callable):
+def dynamic_params(**param_mapping: Callable):
     def decorator(test_func: Callable) -> Callable:
         # Validate param_mapping
         for param_name, generator_func in param_mapping.items():

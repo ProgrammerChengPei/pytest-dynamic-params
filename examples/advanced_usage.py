@@ -8,7 +8,7 @@ import time
 
 import pytest
 
-from dynamic_params import param_generator, with_dynamic_params
+from dynamic_params import dynamic_params, param_generator
 
 
 # 示例1：多个动态参数嵌套
@@ -34,7 +34,7 @@ def validate_results(processed_data, threshold):
     return all(score >= threshold for score in scores)
 
 
-@with_dynamic_params(
+@dynamic_params(
     raw_data=get_raw_data, processed_data=process_data, is_valid=validate_results
 )
 @pytest.mark.parametrize("data_source", ["api", "database"])
@@ -87,7 +87,7 @@ def session_scoped_data():
 class TestScopesUsage:
     """作用域使用测试类示例"""
 
-    @with_dynamic_params(
+    @dynamic_params(
         func_data=function_scoped_data,
         class_data=class_scoped_data,
         mod_data=module_scoped_data,
@@ -120,7 +120,7 @@ def uncached_data():
     return time.time()
 
 
-@with_dynamic_params(cached_result=cached_data, uncached_result=uncached_data)
+@dynamic_params(cached_result=cached_data, uncached_result=uncached_data)
 @pytest.mark.parametrize("input_value", [1, 2])
 def test_cache_control(input_value, cached_result, uncached_result):
     """缓存控制测试示例"""
@@ -148,7 +148,7 @@ def eager_data(input_value):
     return input_value * 3
 
 
-@with_dynamic_params(lazy_result=lazy_data, eager_result=eager_data)
+@dynamic_params(lazy_result=lazy_data, eager_result=eager_data)
 @pytest.mark.parametrize("input_value", [1, 2])
 def test_lazy_loading(input_value, lazy_result, eager_result):
     """懒加载控制测试示例"""
@@ -169,7 +169,7 @@ def optimized_data(input_value):
     return input_value * 100
 
 
-@with_dynamic_params(optimized_result=optimized_data)
+@dynamic_params(optimized_result=optimized_data)
 @pytest.mark.parametrize("input_value", [1, 2, 3])
 def test_combined_config(input_value, optimized_result):
     """组合配置测试示例"""

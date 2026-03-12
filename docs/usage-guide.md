@@ -15,8 +15,8 @@ pip install -e .
 ### 1. 参数生成器 (`@param_generator`)
 使用 `@param_generator` 装饰器定义的函数，用于动态生成参数值。支持配置作用域、缓存和懒加载。
 
-### 2. 动态参数装饰器 (`@with_dynamic_params`)
-使用 `@with_dynamic_params` 装饰器将参数生成器与测试函数关联起来，支持多个动态参数。
+### 2. 动态参数装饰器 (`@dynamic_params`)
+使用 `@dynamic_params` 装饰器将参数生成器与测试函数关联起来，支持多个动态参数。
 
 ### 3. 作用域管理
 支持四种作用域：`function`（默认）、`class`、`module`、`session`，控制参数生成的生命周期。
@@ -35,13 +35,13 @@ pip install -e .
 ### 简单参数生成
 
 ```python
-from dynamic_params import param_generator, with_dynamic_params
+from dynamic_params import param_generator, dynamic_params
 
 @param_generator
 def calculate_result(input_value):
     return input_value * 2
 
-@with_dynamic_params(result=calculate_result)
+@dynamic_params(result=calculate_result)
 @pytest.mark.parametrize("input_value", [1, 2, 3])
 def test_basic(input_value, result):
     assert result == input_value * 2
@@ -59,7 +59,7 @@ def database():
 def get_user_data(database, user_type):
     return database["users"].get(user_type, {"type": "unknown"})
 
-@with_dynamic_params(user_data=get_user_data)
+@dynamic_params(user_data=get_user_data)
 @pytest.mark.parametrize("user_type", ["admin", "user"])
 def test_with_fixture(database, user_type, user_data):
     assert user_data["type"] == user_type
@@ -80,7 +80,7 @@ def generate_config(environment, feature_flag):
         "timeout": environment["timeout"] + 10
     }
 
-@with_dynamic_params(config=generate_config)
+@dynamic_params(config=generate_config)
 @pytest.mark.parametrize("feature_flag", ["A/B", "control"])
 def test_parametrized_fixture(environment, feature_flag, config):
     assert config["env"] == environment["env"]
@@ -101,7 +101,7 @@ def get_raw_data(data_source, size):
 def process_data(raw_data, algorithm):
     return [apply_algorithm(item, algorithm) for item in raw_data]
 
-@with_dynamic_params(
+@dynamic_params(
     raw_data=get_raw_data,
     processed_data=process_data
 )
@@ -177,7 +177,7 @@ def generate_a(b_value):  # 依赖于b
 def generate_b(a_value):  # 依赖于a - 循环依赖！
     return f"B_based_on_{a_value}"
 
-@with_dynamic_params(a=generate_a, b=generate_b)
+@dynamic_params(a=generate_a, b=generate_b)
 def test_will_fail(a, b):  # 这个测试将失败，因为存在循环依赖
     pass
 ```
@@ -248,7 +248,7 @@ markers =
 
 确保：
 1. 使用了 `@param_generator` 装饰器
-2. 在测试函数上使用了 `@with_dynamic_params` 装饰器
+2. 在测试函数上使用了 `@dynamic_params` 装饰器
 3. 参数名在两个装饰器之间保持一致
 4. 依赖的参数在测试环境中可用
 

@@ -5,7 +5,7 @@
 
 import pytest
 
-from dynamic_params import with_dynamic_params
+from dynamic_params import dynamic_params
 from tests.generators import generate_test_data
 
 
@@ -31,7 +31,7 @@ def app_config(database_config):
 class TestNestedFixtures:
     """测试嵌套fixtures的测试类"""
 
-    @with_dynamic_params(test_data=generate_test_data)
+    @dynamic_params(test_data=generate_test_data)
     @pytest.mark.parametrize("test_type", ["unit", "integration"])
     def test_fixture_nesting(self, app_config, test_type, test_data):
         """fixture依赖链：
@@ -42,7 +42,7 @@ class TestNestedFixtures:
         assert len(test_data["data"]) == 3
 
     # 测试边界情况：不同的测试类型
-    @with_dynamic_params(test_data=generate_test_data)
+    @dynamic_params(test_data=generate_test_data)
     @pytest.mark.parametrize("test_type", ["", None, "smoke"])
     def test_fixture_nesting_edge_cases(self, app_config, test_type, test_data):
         """测试边界情况：空和None测试类型"""

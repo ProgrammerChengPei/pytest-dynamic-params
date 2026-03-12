@@ -142,7 +142,7 @@ def pytest_runtest_call(item):
 
     # 创建生成器参数名到测试函数参数名的映射
     # 因为生成器函数内部使用的参数名可能与测试函数中的参数名不同
-    # 例如：@with_dynamic_params(l1=level1)，生成器函数level1内部使用的参数名可能是其他名称
+    # 例如：@dynamic_params(l1=level1)，生成器函数level1内部使用的参数名可能是其他名称
     # 但在这里，我们需要处理的是生成器之间的依赖关系，它们应该使用生成器函数内部的参数名
     # 所以我们需要创建一个反向映射，从生成器的param_name到测试函数的参数名
     param_name_map = {}

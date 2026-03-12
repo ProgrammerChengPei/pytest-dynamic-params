@@ -5,7 +5,7 @@
 
 import pytest
 
-from dynamic_params import param_generator, with_dynamic_params
+from dynamic_params import dynamic_params, param_generator
 
 
 # 测试生成器
@@ -24,14 +24,14 @@ def generate_config():
 class TestPluginCompatibility:
     """测试与其他pytest插件的兼容性"""
 
-    @with_dynamic_params(value=generate_test_value)
+    @dynamic_params(value=generate_test_value)
     def test_with_cov(self, value):
         """测试与pytest-cov的兼容性"""
         assert isinstance(value, list)
         assert len(value) == 3
         assert all(item in [1, 2, 3] for item in value)
 
-    @with_dynamic_params(value=generate_test_value)
+    @dynamic_params(value=generate_test_value)
     def test_with_mock(self, value, mocker):
         """测试与pytest-mock的兼容性"""
         # 模拟一个函数
@@ -41,7 +41,7 @@ class TestPluginCompatibility:
         assert isinstance(value, list)
         assert len(value) == 3
 
-    @with_dynamic_params(value=generate_test_value)
+    @dynamic_params(value=generate_test_value)
     @pytest.mark.timeout(5)
     def test_with_timeout(self, value):
         """测试与pytest-timeout的兼容性"""
@@ -52,14 +52,14 @@ class TestPluginCompatibility:
         assert isinstance(value, list)
         assert len(value) == 3
 
-    @with_dynamic_params(config=generate_config)
+    @dynamic_params(config=generate_config)
     def test_with_config(self, config):
         """测试配置生成与插件兼容性"""
         assert config["debug"] is True
         assert config["timeout"] == 10
 
     # 测试多个动态参数与插件的组合
-    @with_dynamic_params(value=generate_test_value, config=generate_config)
+    @dynamic_params(value=generate_test_value, config=generate_config)
     def test_multiple_params_with_plugins(self, value, config, mocker):
         """测试多个动态参数与插件的组合"""
         mock_func = mocker.patch("builtins.print")

@@ -5,7 +5,7 @@
 
 import pytest
 
-from dynamic_params import param_generator, with_dynamic_params
+from dynamic_params import dynamic_params, param_generator
 
 # 计数器用于跟踪函数调用次数
 call_counts = {}
@@ -34,7 +34,7 @@ class TestCacheFunctionality:
         """每次测试前清空计数器"""
         call_counts.clear()
 
-    @with_dynamic_params(cached_data=cached_function_data)
+    @dynamic_params(cached_data=cached_function_data)
     @pytest.mark.parametrize("input_value", [1, 2, 1])  # 注意：1重复出现
     def test_function_scope_cache(self, input_value, cached_data):
         """测试函数作用域缓存 - 相同参数应该产生不同的结果（因为函数作用域不跨测试缓存）"""
@@ -42,7 +42,7 @@ class TestCacheFunctionality:
         assert cached_data.startswith("function_cached_")
         assert str(input_value) in cached_data
 
-    @with_dynamic_params(class_cached=cached_class_data)
+    @dynamic_params(class_cached=cached_class_data)
     @pytest.mark.parametrize("input_value", [1, 2, 1])  # 注意：1重复出现
     def test_class_scope_cache_reuse(self, input_value, class_cached):
         """测试类作用域缓存 - 相同参数应该复用缓存结果"""
@@ -65,7 +65,7 @@ class TestNoCacheFunctionality:
         """每次测试前清空计数器"""
         call_counts.clear()
 
-    @with_dynamic_params(uncached_data=uncached_function_data)
+    @dynamic_params(uncached_data=uncached_function_data)
     @pytest.mark.parametrize("input_value", [1, 1, 1])  # 相同参数多次出现
     def test_no_cache_always_executes(self, input_value, uncached_data):
         """测试禁用缓存时每次都执行生成器"""

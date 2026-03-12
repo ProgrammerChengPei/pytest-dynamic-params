@@ -5,7 +5,7 @@
 
 import pytest
 
-from dynamic_params import with_dynamic_params
+from dynamic_params import dynamic_params
 from tests.generators import generate_config
 
 
@@ -19,7 +19,7 @@ def environment(request):
 class TestParametrizedFixture:
     """测试使用参数化fixture的测试类"""
 
-    @with_dynamic_params(config=generate_config)
+    @dynamic_params(config=generate_config)
     @pytest.mark.parametrize("feature_flag", ["A/B", "control"])
     def test_parametrized_fixture(self, environment, feature_flag, config):
         """测试用例数量：3个环境 × 2个feature_flag = 6个"""
@@ -28,7 +28,7 @@ class TestParametrizedFixture:
         assert config["timeout"] == environment["timeout"] + 10
 
     # 测试边界情况：空的feature_flag
-    @with_dynamic_params(config=generate_config)
+    @dynamic_params(config=generate_config)
     @pytest.mark.parametrize("feature_flag", ["", None])
     def test_parametrized_fixture_empty_feature(
         self, environment, feature_flag, config

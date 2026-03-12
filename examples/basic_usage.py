@@ -6,7 +6,7 @@
 
 import pytest
 
-from dynamic_params import param_generator, with_dynamic_params
+from dynamic_params import dynamic_params, param_generator
 
 
 # 示例1：基础参数生成
@@ -16,10 +16,10 @@ def calculate_result(input_value):
     return input_value * 2
 
 
-@with_dynamic_params(result=calculate_result)
+@dynamic_params(result=calculate_result)
 @pytest.mark.parametrize("input_value", [1, 2, 3])
-def test_basic_param_generation(input_value, result):
-    """基础参数生成测试示例"""
+def test_basic(input_value, result):
+    """测试用例数量：3个"""
     assert result == input_value * 2
 
 
@@ -36,7 +36,7 @@ def get_user_data(database, user_type):
     return database["users"].get(user_type, {"type": "unknown"})
 
 
-@with_dynamic_params(user_data=get_user_data)
+@dynamic_params(user_data=get_user_data)
 @pytest.mark.parametrize("user_type", ["admin", "user"])
 def test_fixture_integration(database, user_type, user_data):
     """与fixture混合使用测试示例"""
@@ -61,7 +61,7 @@ def generate_config(environment, feature_flag):
     }
 
 
-@with_dynamic_params(config=generate_config)
+@dynamic_params(config=generate_config)
 @pytest.mark.parametrize("feature_flag", ["A/B", "control"])
 def test_parametrized_fixture_usage(environment, feature_flag, config):
     """参数化fixture测试示例"""
@@ -95,7 +95,7 @@ def generate_test_data(app_config, test_type):
     return {"config": app_config, "type": test_type, "data": [1, 2, 3]}
 
 
-@with_dynamic_params(test_data=generate_test_data)
+@dynamic_params(test_data=generate_test_data)
 @pytest.mark.parametrize("test_type", ["unit", "integration"])
 def test_fixture_nesting(app_config, test_type, test_data):
     """fixture嵌套依赖测试示例"""

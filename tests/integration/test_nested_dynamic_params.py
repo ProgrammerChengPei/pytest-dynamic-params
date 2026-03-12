@@ -10,14 +10,14 @@
 
 import pytest
 
-from dynamic_params import with_dynamic_params
+from dynamic_params import dynamic_params
 from tests.generators import get_raw_data, process_data, validate_results
 
 
 class TestNestedDynamicParams:
     """测试嵌套动态参数的测试类"""
 
-    @with_dynamic_params(
+    @dynamic_params(
         raw_data=get_raw_data, processed_data=process_data, is_valid=validate_results
     )
     @pytest.mark.parametrize("data_source", ["api", "database"])
@@ -55,7 +55,7 @@ class TestNestedDynamicParams:
         assert isinstance(is_valid, bool)
 
     # 测试边界情况：空数据源和零大小
-    @with_dynamic_params(
+    @dynamic_params(
         raw_data=get_raw_data, processed_data=process_data, is_valid=validate_results
     )
     @pytest.mark.parametrize("data_source", ["", None])
@@ -88,7 +88,7 @@ class TestNestedDynamicParams:
         assert isinstance(is_valid, bool)
 
     # 测试更多算法类型
-    @with_dynamic_params(
+    @dynamic_params(
         raw_data=get_raw_data, processed_data=process_data, is_valid=validate_results
     )
     @pytest.mark.parametrize("data_source", ["api"])

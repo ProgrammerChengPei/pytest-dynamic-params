@@ -3,7 +3,7 @@
 对应需求文档中的示例9
 """
 
-from dynamic_params import param_generator, with_dynamic_params
+from dynamic_params import dynamic_params, param_generator
 
 
 @param_generator
@@ -33,7 +33,7 @@ def level4(level3):
 class TestComplexDependencies:
     """测试复杂依赖链的测试类"""
 
-    @with_dynamic_params(l1=level1, l2=level2, l3=level3, l4=level4)
+    @dynamic_params(l1=level1, l2=level2, l3=level3, l4=level4)
     def test_deep_dependency_chain(self, l1, l2, l3, l4):
         """测试深层依赖链"""
         assert l1 == 1

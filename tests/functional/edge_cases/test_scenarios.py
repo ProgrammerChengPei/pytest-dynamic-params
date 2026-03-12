@@ -5,7 +5,7 @@
 
 import pytest
 
-from dynamic_params import param_generator, with_dynamic_params
+from dynamic_params import dynamic_params, param_generator
 
 
 @param_generator
@@ -33,7 +33,7 @@ def exception_result(value):
 class TestEdgeCases:
     """测试边界情况的测试类"""
 
-    @with_dynamic_params(edge_result=edge_case_result)
+    @dynamic_params(edge_result=edge_case_result)
     @pytest.mark.parametrize("value", [None, "", -1, 0, 1, 1000000])
     def test_edge_cases(self, value, edge_result):
         """测试边界情况"""
@@ -46,7 +46,7 @@ class TestEdgeCases:
         else:
             assert edge_result == f"normal_{value}"
 
-    @with_dynamic_params(exception_result=exception_result)
+    @dynamic_params(exception_result=exception_result)
     @pytest.mark.parametrize("value", [1, 2, 0, 5])
     def test_exception_handling(self, value, exception_result):
         """测试异常输入处理"""

@@ -5,7 +5,7 @@
 
 import pytest
 
-from dynamic_params import with_dynamic_params
+from dynamic_params import dynamic_params
 from tests.generators import get_user_data
 
 
@@ -29,7 +29,7 @@ def empty_database():
 class TestFixture:
     """测试使用fixture的测试类"""
 
-    @with_dynamic_params(user_data=get_user_data)
+    @dynamic_params(user_data=get_user_data)
     @pytest.mark.parametrize("user_type", ["admin", "user"])
     def test_fixture_integration(self, database, user_type, user_data):
         """测试用例数量：2个"""
@@ -41,7 +41,7 @@ class TestFixtureEdgeCases:
     """测试使用fixture的边界情况"""
 
     # 测试错误情况：不存在的用户类型
-    @with_dynamic_params(user_data=get_user_data)
+    @dynamic_params(user_data=get_user_data)
     @pytest.mark.parametrize("user_type", ["guest"])
     def test_fixture_nonexistent_user(self, empty_database, user_type, user_data):
         """测试不存在的用户类型"""

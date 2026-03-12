@@ -5,7 +5,7 @@
 
 import pytest
 
-from dynamic_params import param_generator, with_dynamic_params
+from dynamic_params import dynamic_params, param_generator
 
 
 @param_generator(lazy=True)
@@ -31,21 +31,21 @@ def eager_generator(value):
 class TestLazyLoading:
     """测试懒加载功能的测试类"""
 
-    @with_dynamic_params(result=lazy_generator)
+    @dynamic_params(result=lazy_generator)
     @pytest.mark.parametrize("value", [2])
     def test_lazy_loading(self, value, result):
         """测试懒加载模式"""
         # 验证结果直接是计算值（插件会自动执行懒加载结果）
         assert result == 4
 
-    @with_dynamic_params(result=eager_generator)
+    @dynamic_params(result=eager_generator)
     @pytest.mark.parametrize("value", [2])
     def test_eager_loading(self, value, result):
         """测试非懒加载模式"""
         # 验证结果直接是计算值
         assert result == 4
 
-    @with_dynamic_params(lazy_result=lazy_generator, eager_result=eager_generator)
+    @dynamic_params(lazy_result=lazy_generator, eager_result=eager_generator)
     @pytest.mark.parametrize("value", [2])
     def test_mixed_loading(self, value, lazy_result, eager_result):
         """测试混合加载模式"""

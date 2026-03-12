@@ -5,7 +5,7 @@
 
 import pytest
 
-from dynamic_params import param_generator, with_dynamic_params
+from dynamic_params import dynamic_params, param_generator
 
 
 # 创建依赖于静态参数的生成器
@@ -24,7 +24,7 @@ def complex_calculation(seed_value, multiplier, offset):
 class TestGeneratorParamDependencies:
     """测试参数生成器对静态参数依赖关系的测试类"""
 
-    @with_dynamic_params(calc=complex_calculation)
+    @dynamic_params(calc=complex_calculation)
     @pytest.mark.parametrize("seed_value", [1, 2])
     @pytest.mark.parametrize("multiplier", [10, 20])
     @pytest.mark.parametrize("offset", [5, 15])

@@ -3,7 +3,7 @@
 对应需求文档中关于作用域管理的部分
 """
 
-from dynamic_params import param_generator, with_dynamic_params
+from dynamic_params import dynamic_params, param_generator
 
 
 @param_generator(scope="function")
@@ -27,7 +27,7 @@ def module_scope_data():
 class TestScopes:
     """测试不同作用域的测试类"""
 
-    @with_dynamic_params(
+    @dynamic_params(
         func_data=func_scope_data,
         class_data=class_scope_data,
         mod_data=module_scope_data,
@@ -38,7 +38,7 @@ class TestScopes:
         assert class_data == "class_data"
         assert mod_data == "module_data"
 
-    @with_dynamic_params(
+    @dynamic_params(
         func_data=func_scope_data,
         class_data=class_scope_data,
         mod_data=module_scope_data,

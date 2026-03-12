@@ -1,6 +1,20 @@
 # pytest-dynamic-params
 
-pytest-dynamic-params 是一个为 pytest 设计的动态参数化插件，通过声明式参数生成器自动处理依赖解析和参数化，支持懒加载、缓存机制和多作用域管理，与现有 pytest 机制无缝集成，简化复杂测试场景的参数管理，提高测试效率和可维护性。
+![CI](https://github.com/ProgrammerChengPei/pytest-dynamic-params/workflows/CI/badge.svg)
+![Coverage](https://codecov.io/gh/ProgrammerChengPei/pytest-dynamic-params/branch/main/graph/badge.svg)
+![Version](https://img.shields.io/pypi/v/pytest-dynamic-params.svg)
+![Downloads](https://img.shields.io/pypi/dm/pytest-dynamic-params.svg)
+![Python](https://img.shields.io/pypi/pyversions/pytest-dynamic-params.svg)
+![License](https://img.shields.io/pypi/l/pytest-dynamic-params.svg)
+
+pytest-dynamic-params 是一个为 pytest 设计的动态参数化插件，解决了传统 pytest 参数化中的核心问题：
+
+- **参数化时机冲突**：传统 `@pytest.mark.parametrize` 在模块导入阶段执行，而 fixture 在测试运行阶段才实例化
+- **动态数据生成困难**：无法在装饰器参数中调用依赖 fixture 的函数
+- **复杂的参数组合**：需要手动编写钩子函数处理参数收集、组合和动态生成
+- **依赖管理缺失**：无法自动处理参数间的依赖关系，需要手动排序
+
+通过声明式参数生成器自动处理依赖解析和参数化，支持懒加载、缓存机制和多作用域管理，与现有 pytest 机制无缝集成，简化复杂测试场景的参数管理，提高测试效率和可维护性。
 
 ## 特性
 
@@ -23,13 +37,13 @@ pip install -e .
 安装后，您可以立即在测试中使用动态参数装饰器：
 
 ```python
-from dynamic_params import param_generator, with_dynamic_params
+from dynamic_params import param_generator, dynamic_params
 
 @param_generator
 def calculate_result(input_value):
     return input_value * 2
 
-@with_dynamic_params(result=calculate_result)
+@dynamic_params(result=calculate_result)
 @pytest.mark.parametrize("input_value", [1, 2, 3])
 def test_basic(input_value, result):
     assert result == input_value * 2
@@ -43,6 +57,123 @@ def test_basic(input_value, result):
 - **懒加载**：推迟参数生成到实际需要时执行，避免不必要的计算
 - **缓存机制**：缓存参数生成结果，避免重复计算，提高性能
 - **作用域管理**：控制参数生成器实例的生命周期，影响缓存和执行时机
+
+## 如何解决核心问题
+
+### 1. 解决参数化时机冲突
+
+传统 pytest 中，`@pytest.mark.parametrize` 在模块导入阶段执行，而 fixture 在测试运行阶段才实例化，导致无法在参数化中使用 fixture 的值。
+
+**解决方案**：
+```python
+from dynamic_params import param_generator, dynamic_params
+import pytest
+
+@pytest.fixture
+def environment():
+    return "production"
+
+@param_generator
+def generate_config(environment):
+    # 这里可以使用 fixture 的值，因为 generate_config 在测试运行阶段执行
+    return {"env": environment, "timeout": 30}
+
+@dynamic_params(config=generate_config)
+def test_with_fixture_dependency(environment, config):
+    assert config["env"] == environment
+    assert config["timeout"] == 30
+```
+
+### 2. 解决动态数据生成困难
+
+传统 pytest 中，无法在装饰器参数中调用依赖 fixture 的函数，限制了动态数据生成的能力。
+
+**解决方案**：
+```python
+from dynamic_params import param_generator, dynamic_params
+import pytest
+
+@pytest.fixture
+def database():
+    return {"users": [1, 2, 3], "prefix": "User_"}
+
+@param_generator
+def get_user_data(database, user_id):
+    # 这里可以动态生成依赖 fixture 的数据
+    return {"id": user_id, "name": f"{database['prefix']}{user_id}"}
+
+@dynamic_params(user_data=get_user_data)
+@pytest.mark.parametrize("user_id", [1, 2, 3])
+def test_dynamic_data_generation(database, user_id, user_data):
+    assert user_data["id"] == user_id
+    assert user_data["name"] == f"{database['prefix']}{user_id}"
+    assert user_id in database["users"]
+```
+
+### 3. 解决复杂的参数组合
+
+传统 pytest 中，需要手动编写钩子函数处理参数收集、组合和动态生成，代码复杂度高。
+
+**解决方案**：
+```python
+from dynamic_params import param_generator, dynamic_params
+import pytest
+
+@param_generator
+def generate_base_config():
+    return {"base": "config"}
+
+@param_generator
+def generate_env_config(base_config, environment):
+    return {**base_config, "env": environment}
+
+@param_generator
+def generate_full_config(env_config, feature_flag):
+    return {**env_config, "feature": feature_flag}
+
+@dynamic_params(
+    base_config=generate_base_config,
+    env_config=generate_env_config,
+    full_config=generate_full_config
+)
+@pytest.mark.parametrize("environment", ["dev", "test", "prod"])
+@pytest.mark.parametrize("feature_flag", [True, False])
+def test_complex_parameter_combinations(
+    environment, feature_flag, base_config, env_config, full_config
+):
+    assert base_config["base"] == "config"
+    assert env_config["env"] == environment
+    assert full_config["feature"] == feature_flag
+```
+
+### 4. 解决依赖管理缺失
+
+传统 pytest 中，无法自动处理参数间的依赖关系，需要手动排序，容易出错。
+
+**解决方案**：
+```python
+from dynamic_params import param_generator, dynamic_params
+
+@param_generator
+def generate_a():
+    return "value_a"
+
+@param_generator
+def generate_b(a):  # 依赖 generate_a 的结果
+    return f"b_from_{a}"
+
+@param_generator
+def generate_c(b):  # 依赖 generate_b 的结果
+    return f"c_from_{b}"
+
+@dynamic_params(a=generate_a, b=generate_b, c=generate_c)
+def test_automatic_dependency_management(a, b, c):
+    assert a == "value_a"
+    assert b == "b_from_value_a"
+    assert c == "c_from_b_from_value_a"
+```
+
+系统会自动分析参数生成器的依赖关系，并按正确的顺序执行它们，无需手动排序。
 
 ## 使用示例
 
