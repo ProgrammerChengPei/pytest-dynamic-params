@@ -29,9 +29,9 @@ jobs:
         pre-commit run --all-files
     - name: Run tests with coverage
       run: |
-        pytest tests/ --cov=src.dynamic_params --cov-report=xml
+        pytest tests/ --cov=src.dynamic_params --cov-branch --cov-report=xml
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v5
       with:
         file: ./coverage.xml
         flags: unittests

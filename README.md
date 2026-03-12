@@ -1,6 +1,6 @@
 # pytest-dynamic-params
 
-![CI](https://github.com/ProgrammerChengPei/pytest-dynamic-params/workflows/CI/badge.svg)
+![CI](https://github.com/ProgrammerChengPei/pytest-dynamic-params/workflows/Code%20Quality/badge.svg)
 ![Coverage](https://codecov.io/gh/ProgrammerChengPei/pytest-dynamic-params/branch/main/graph/badge.svg)
 ![Version](https://img.shields.io/pypi/v/pytest-dynamic-params.svg)
 ![Downloads](https://img.shields.io/pypi/dm/pytest-dynamic-params.svg)
