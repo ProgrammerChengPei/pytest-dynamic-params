@@ -1,0 +1,95 @@
+[project]
+name = "pytest-dynamic-params"
+version = "0.2.0"
+description = "Dynamic parameters plugin for pytest"
+readme = "README.md"
+authors = [
+    { name = "Cheng Pei", email = "penelope_cheng@163.com" }
+]
+license = { file = "LICENSE" }
+classifiers = [
+    "Framework :: Pytest",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Operating System :: OS Independent",
+    "License :: OSI Approved :: MIT License",
+    "Intended Audience :: Developers",
+    "Topic :: Software Development :: Testing"
+]
+requires-python = ">=3.8"
+dependencies = [
+    "pytest"
+]
+keywords = [
+    "pytest", "testing",
+    "dynamic-parameters", "parameterization",
+    "fixture-integration", "fixture-parameterization", "parameterized-fixtures",
+    "dependency-management",
+    "lazy-loading", "cache"
+]
+
+[project.urls]
+homepage = "https://github.com/ProgrammerChengPei/pytest-dynamic-params"
+repository = "https://github.com/ProgrammerChengPei/pytest-dynamic-params.git"
+
+[project.optional-dependencies]
+dev = [
+    "black",
+    "flake8",
+    "isort",
+    "mypy",
+    "bandit",
+    "pre-commit",
+    "pytest-cov"
+]
+
+[project.entry-points.pytest11]
+dynamic-params = "dynamic_params.plugin"
+
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.basedpyright]
+pythonVersion = "3.8"
+strict = true
+reportMissingImports = true
+reportMissingTypeStubs = true
+reportUnusedVariable = true
+reportUnusedImport = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+
+[tool.black]
+line-length = 88
+target-version = ['py38']
+
+[tool.isort]
+profile = "black"
+
+[tool.flake8]
+max-line-length = 88
+extend-ignore = [
+    "E203",  # 与 black 冲突的空格规则
+    "ANN101", "ANN102", "ANN103", "ANN104",  # 忽略 self/cls 的类型注解检查
+    "ANN201", "ANN202", "ANN203", "ANN204", "ANN205", "ANN206",  # 忽略返回值类型注解检查
+    "ANN001", "ANN002", "ANN003"  # 忽略参数类型注解检查
+]
+
+[tool.flake8.plugins]
+flake8-annotations = false
+
+[tool.mypy]
+python_version = "3.10"
+ignore_missing_imports = true
+exclude = "^tests/|^venv/|^\\.venv/"
+mypy_path = "src"
+follow_imports = "silent"
+warn_unused_configs = true
+namespace_packages = true
