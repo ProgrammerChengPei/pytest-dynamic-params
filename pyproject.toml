@@ -42,7 +42,8 @@ dev = [
     "isort",
     "mypy",
     "bandit",
-    "pre-commit"
+    "pre-commit",
+    "pytest-cov"
 ]
 
 [project.entry-points.pytest11]
