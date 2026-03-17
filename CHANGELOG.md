@@ -5,6 +5,16 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)，
 项目遵循 [语义化版本](https://semver.org/spec/v2.0.0.html) 规范。
 
+## v0.3.0 - 2026-03-17
+
+### 主要变更
+- 将 `dynamic_params` 装饰器重命名为 `use_generators`，注意此变更不保持向后兼容性！
+- 更新了所有文档，确保使用 `use_generators` 而不是 `dynamic_params`
+- 优化了需求文档，采用更清晰的结构和详细的验收标准
+- 优化了设计文档，提供更详细的架构设计和实现方案
+- 更新了 README.md 中的示例代码和说明
+- 增强了用户指南，添加了更多使用示例和最佳实践
+
 ## v0.2.0 - 2026-03-12
 
 ### 主要变更

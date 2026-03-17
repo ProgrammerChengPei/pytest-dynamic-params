@@ -2,7 +2,7 @@
 使用pytest-benchmark的基准测试
 """
 
-from dynamic_params import dynamic_params, param_generator
+from dynamic_params import use_generators, param_generator
 
 
 class TestBenchmark:
@@ -15,7 +15,7 @@ class TestBenchmark:
         def simple_gen(x):
             return x + 1
 
-        @dynamic_params(result=simple_gen)
+        @use_generators(result=simple_gen)
         def test_func(x, result):
             assert result == x + 1
 
@@ -33,7 +33,7 @@ class TestBenchmark:
         def gen2(x):
             return x + 10
 
-        @dynamic_params(doubled=gen1, added=gen2)
+        @use_generators(doubled=gen1, added=gen2)
         def test_func(x, doubled, added):
             assert doubled == x * 2
             assert added == x + 10
@@ -51,7 +51,7 @@ class TestBenchmark:
                 result += x * i
             return result
 
-        @dynamic_params(result=cached_gen)
+        @use_generators(result=cached_gen)
         def test_func(x, result):
             expected = sum(x * i for i in range(10))
             assert result == expected
@@ -69,7 +69,7 @@ class TestBenchmark:
         def derived_gen(base):
             return base * 3
 
-        @dynamic_params(base=base_gen, derived=derived_gen)
+        @use_generators(base=base_gen, derived=derived_gen)
         def test_func(x, base, derived):
             assert base == x + 5
             assert derived == (x + 5) * 3
@@ -83,7 +83,7 @@ class TestBenchmark:
         def process_string(s):
             return s.upper()
 
-        @dynamic_params(uppercase=process_string)
+        @use_generators(uppercase=process_string)
         def test_func(s, uppercase):
             assert uppercase == s.upper()
 

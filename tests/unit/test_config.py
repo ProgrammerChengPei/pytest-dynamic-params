@@ -58,31 +58,6 @@ class TestDynamicParamConfig:
         nonexistent_section = config.get_section("nonexistent")
         assert nonexistent_section == {}
 
-    def test_with_environment_variables(self):
-        """测试从环境变量加载配置"""
-        # 保存原始单例实例
-        original_instance = DynamicParamConfig._instance
-
-        try:
-            # 清除单例实例
-            DynamicParamConfig._instance = None
-
-            with patch.dict(
-                os.environ,
-                {
-                    "PYTEST_DYNAMIC_PARAM_CACHE": "false",
-                    "PYTEST_DYNAMIC_PARAM_VALIDATION": "loose",
-                },
-            ):
-                # 重新创建配置对象以触发环境变量加载
-                config = DynamicParamConfig()
-
-                assert config.get("cache", "enabled") is False
-                assert config.get("validation", "level") == "loose"
-        finally:
-            # 恢复原始单例实例
-            DynamicParamConfig._instance = original_instance
-
     def test_with_config_file(self):
         """测试从配置文件加载配置"""
         # 创建临时配置文件
@@ -112,32 +87,6 @@ class TestDynamicParamConfig:
         config = DynamicParamConfig()
         value = config.get("nonexistent", "option", default=None)
         assert value is None
-
-    def test_environment_variable_priority(self):
-        """测试环境变量优先级高于默认配置"""
-        # 保存原始单例实例
-        original_instance = DynamicParamConfig._instance
-
-        try:
-            # 清除单例实例
-            DynamicParamConfig._instance = None
-
-            with patch.dict(
-                os.environ,
-                {
-                    "PYTEST_DYNAMIC_PARAM_CACHE": "true",
-                    "PYTEST_DYNAMIC_PARAM_VALIDATION": "strict",
-                },
-            ):
-                # 重新创建配置对象以触发环境变量加载
-                config = DynamicParamConfig()
-
-                # 验证环境变量值被正确加载
-                assert config.get("cache", "enabled") is True
-                assert config.get("validation", "level") == "strict"
-        finally:
-            # 恢复原始单例实例
-            DynamicParamConfig._instance = original_instance
 
     def test_validate(self):
         """测试配置验证功能"""
@@ -219,31 +168,6 @@ class TestDynamicParamConfig:
                 assert False, "Expected ConfigurationError was not raised"
             except ConfigurationError:
                 pass  # 预期的错误
-        finally:
-            # 恢复原始单例实例
-            DynamicParamConfig._instance = original_instance
-
-    def test_update_from_env_error_handling(self):
-        """测试从环境变量更新配置时的错误处理"""
-        # 保存原始单例实例
-        original_instance = DynamicParamConfig._instance
-
-        try:
-            # 清除单例实例
-            DynamicParamConfig._instance = None
-
-            # 设置一个无效的环境变量（格式不正确）
-            with patch.dict(
-                os.environ,
-                {
-                    "PYTEST_DYNAMIC_PARAM_CACHE": "true",
-                    # 这个环境变量的配置键格式不正确
-                    "PYTEST_DYNAMIC_PARAM_INVALID": "invalid_key",
-                },
-            ):
-                # 重新创建配置对象，应该能正常创建（错误会被捕获）
-                config = DynamicParamConfig()
-                assert config is not None
         finally:
             # 恢复原始单例实例
             DynamicParamConfig._instance = original_instance

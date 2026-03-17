@@ -8,7 +8,7 @@ import time
 
 import pytest
 
-from dynamic_params import dynamic_params, param_generator
+from dynamic_params import use_generators, param_generator
 
 
 # 示例1：多个动态参数嵌套
@@ -34,7 +34,7 @@ def validate_results(processed_data, threshold):
     return all(score >= threshold for score in scores)
 
 
-@dynamic_params(
+@use_generators(
     raw_data=get_raw_data, processed_data=process_data, is_valid=validate_results
 )
 @pytest.mark.parametrize("data_source", ["api", "database"])
@@ -87,7 +87,7 @@ def session_scoped_data():
 class TestScopesUsage:
     """作用域使用测试类示例"""
 
-    @dynamic_params(
+    @use_generators(
         func_data=function_scoped_data,
         class_data=class_scoped_data,
         mod_data=module_scoped_data,
@@ -120,7 +120,7 @@ def uncached_data():
     return time.time()
 
 
-@dynamic_params(cached_result=cached_data, uncached_result=uncached_data)
+@use_generators(cached_result=cached_data, uncached_result=uncached_data)
 @pytest.mark.parametrize("input_value", [1, 2])
 def test_cache_control(input_value, cached_result, uncached_result):
     """缓存控制测试示例"""
@@ -148,7 +148,7 @@ def eager_data(input_value):
     return input_value * 3
 
 
-@dynamic_params(lazy_result=lazy_data, eager_result=eager_data)
+@use_generators(lazy_result=lazy_data, eager_result=eager_data)
 @pytest.mark.parametrize("input_value", [1, 2])
 def test_lazy_loading(input_value, lazy_result, eager_result):
     """懒加载控制测试示例"""
@@ -169,7 +169,7 @@ def optimized_data(input_value):
     return input_value * 100
 
 
-@dynamic_params(optimized_result=optimized_data)
+@use_generators(optimized_result=optimized_data)
 @pytest.mark.parametrize("input_value", [1, 2, 3])
 def test_combined_config(input_value, optimized_result):
     """组合配置测试示例"""
@@ -182,20 +182,24 @@ def environment(request):
     """参数化fixture（动态fixture）"""
     return request.param
 
+
 @pytest.fixture
 def env_config(environment):
     """依赖动态fixture的静态fixture"""
     return {"base": "config", "env": environment}
+
 
 @param_generator
 def generate_config_data(env_config):
     """依赖静态fixture的动态参数生成器"""
     return {"data": env_config["env"] + "_" + env_config["base"] + "_data"}
 
-@dynamic_params(config_data=generate_config_data)
+
+@use_generators(config_data=generate_config_data)
 def test_fixture_parameterization(environment, env_config, config_data):
     """依赖参数化fixture的测试示例"""
     assert config_data["data"] == environment + "_" + "config" + "_data"
+
 
 # 示例7：静态fixture调用静态参数
 @pytest.fixture
@@ -204,17 +208,20 @@ def static_param_fixture(input_value):
     """使用静态参数的静态fixture"""
     return input_value * 2
 
+
 @param_generator
 def use_static_param_fixture(static_param_fixture):
     """使用静态fixture的动态参数生成器"""
     return static_param_fixture * 10
 
-@dynamic_params(result=use_static_param_fixture)
+
+@use_generators(result=use_static_param_fixture)
 @pytest.mark.parametrize("input_value", [1, 2, 3])
 def test_static_fixture_with_static_param(input_value, static_param_fixture, result):
     """测试静态fixture调用静态参数"""
     assert static_param_fixture == input_value * 2
     assert result == static_param_fixture * 10
+
 
 # 示例8：动态fixture调用静态参数
 @pytest.fixture(params=[1, 2, 3])
@@ -223,16 +230,21 @@ def dynamic_fixture_with_static_param(request, multiplier):
     """使用静态参数的动态fixture"""
     return request.param * multiplier
 
+
 @param_generator
 def use_dynamic_fixture(dynamic_fixture_with_static_param):
     """使用动态fixture的动态参数生成器"""
     return dynamic_fixture_with_static_param + 5
 
-@dynamic_params(result=use_dynamic_fixture)
+
+@use_generators(result=use_dynamic_fixture)
 @pytest.mark.parametrize("multiplier", [10, 20])
-def test_dynamic_fixture_with_static_param(multiplier, dynamic_fixture_with_static_param, result):
+def test_dynamic_fixture_with_static_param(
+    multiplier, dynamic_fixture_with_static_param, result
+):
     """测试动态fixture调用静态参数"""
     assert result == dynamic_fixture_with_static_param + 5
+
 
 # 示例9：动态fixture调用动态参数
 @pytest.fixture(params=[1, 2, 3])
@@ -240,18 +252,23 @@ def dynamic_fixture(request):
     """动态fixture"""
     return request.param
 
+
 @param_generator
 def dynamic_param(dynamic_fixture):
     """依赖动态fixture的动态参数"""
     return dynamic_fixture * 10
+
 
 @param_generator
 def use_dynamic_param(dynamic_param):
     """依赖动态参数的动态参数"""
     return dynamic_param + 100
 
-@dynamic_params(dynamic_result=dynamic_param, final_result=use_dynamic_param)
-def test_dynamic_fixture_with_dynamic_param(dynamic_fixture, dynamic_result, final_result):
+
+@use_generators(dynamic_result=dynamic_param, final_result=use_dynamic_param)
+def test_dynamic_fixture_with_dynamic_param(
+    dynamic_fixture, dynamic_result, final_result
+):
     """测试动态fixture调用动态参数"""
     assert dynamic_result == dynamic_fixture * 10
     assert final_result == dynamic_result + 100

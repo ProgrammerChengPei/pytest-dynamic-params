@@ -7,7 +7,7 @@ import random
 
 import pytest
 
-from dynamic_params import dynamic_params, param_generator
+from dynamic_params import use_generators, param_generator
 from tests.utils import (
     TestClass,
     measure_execution_time,
@@ -43,7 +43,7 @@ class TestPerformance:
         def generate_numbers(n):
             return n * 2
 
-        @dynamic_params(doubled=generate_numbers)
+        @use_generators(doubled=generate_numbers)
         @pytest.mark.parametrize("n", list(range(100)))  # 100个参数值
         def test_large_combinations(n, doubled):
             assert doubled == n * 2
@@ -70,7 +70,7 @@ class TestPerformance:
 
         # 测试函数
         def make_test_func(gen_dict):
-            @dynamic_params(**gen_dict)
+            @use_generators(**gen_dict)
             @pytest.mark.parametrize("input_val", [1, 2, 3, 4, 5])
             def test_func(input_val, **kwargs):
                 for i in range(10):
@@ -95,7 +95,7 @@ class TestPerformance:
         def cached_generator(x):
             return x * 2
 
-        @dynamic_params(result=cached_generator)
+        @use_generators(result=cached_generator)
         def test_func(x, result):
             assert result == x * 2
 
@@ -148,7 +148,7 @@ class TestPerformance:
         def generate_transformed(base_value):  # 依赖于另一个生成器
             return base_value * 2
 
-        @dynamic_params(
+        @use_generators(
             base_value=generate_base, transformed_value=generate_transformed
         )
         @pytest.mark.parametrize("x", list(range(50)))  # 50个输入值
@@ -171,7 +171,7 @@ class TestPerformance:
             # 创建一个较大的列表来测试内存管理
             return list(range(n))
 
-        @dynamic_params(big_list=generate_list)
+        @use_generators(big_list=generate_list)
         @pytest.mark.parametrize("n", [10, 50, 100])  # 不同大小的列表
         def test_memory(n, big_list):
             assert len(big_list) == n
@@ -197,7 +197,7 @@ class TestPerformance:
                 result += x * i
             return result
 
-        @dynamic_params(heavy_result=compute_heavy_task)
+        @use_generators(heavy_result=compute_heavy_task)
         @pytest.mark.parametrize("x", list(range(20)))
         def test_concurrent_simulation(x, heavy_result):
             expected = sum(x * i for i in range(100))
@@ -229,20 +229,20 @@ class TestPerformance:
             return obj.value * 3
 
         # 测试字符串参数
-        @dynamic_params(uppercase=process_string)
+        @use_generators(uppercase=process_string)
         @pytest.mark.parametrize("s", ["test", "performance", "dynamic", "parameter"])
         def test_string_params(s, uppercase):
             assert uppercase == s.upper()
 
         # 测试字典参数
-        @dynamic_params(processed=process_dict)
+        @use_generators(processed=process_dict)
         @pytest.mark.parametrize("d", [{"a": 1, "b": 2}, {"x": 10, "y": 20}])
         def test_dict_params(d, processed):
             expected = {k: v * 2 for k, v in d.items()}
             assert processed == expected
 
         # 测试对象参数
-        @dynamic_params(processed=process_object)
+        @use_generators(processed=process_object)
         @pytest.mark.parametrize("obj", [TestClass(1), TestClass(2), TestClass(3)])
         def test_object_params(obj, processed):
             assert processed == obj.value * 3
@@ -277,11 +277,11 @@ class TestPerformance:
         def uncached_generator(x):
             return x * 2
 
-        @dynamic_params(result=cached_generator)
+        @use_generators(result=cached_generator)
         def test_cached_func(x, result):
             assert result == x * 2
 
-        @dynamic_params(result=uncached_generator)
+        @use_generators(result=uncached_generator)
         def test_uncached_func(x, result):
             assert result == x * 2
 

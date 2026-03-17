@@ -19,6 +19,10 @@
 │       ├── plugin.py             # pytest插件实现
 │       └── utils.py              # 工具函数
 ├── tests/                # 测试代码
+│   ├── unit/             # 单元测试
+│   ├── integration/      # 集成测试
+│   ├── performance/      # 性能测试
+│   └── conftest.py       # 测试配置文件
 ├── examples/             # 使用示例
 ├── docs/                 # 文档
 ├── specs/                # 项目规格说明
@@ -38,43 +42,44 @@
 - 负责生成器的注册、查找和生命周期管理
 - 提供线程安全的访问机制
 
-### 3. `src/dynamic_params/decorators.py` - 装饰器系统
+### 4. `src/dynamic_params/decorators.py` - 装饰器系统
 - `param_generator`: 参数生成器装饰器，用于标记参数生成函数
   - 支持作用域配置（scope参数）
   - 支持缓存配置（cache参数）
   - 支持懒加载配置（lazy参数）
-- `dynamic_params`: 动态参数装饰器，用于关联测试函数和参数生成器
+- `use_generators`: 动态参数装饰器，用于关联测试函数和参数生成器
   - 验证参数映射的有效性
   - 确保生成器已被正确装饰
+- `dynamic_parametrize`: 动态参数化装饰器，支持在参数化中使用DynRef引用
 
-### 4. `src/dynamic_params/errors.py` - 异常体系
+### 5. `src/dynamic_params/errors.py` - 异常体系
 - `DynamicParamError`: 基础异常类
 - `MissingParameterError`: 缺失参数异常，当依赖的参数在测试环境中不可用时抛出
 - `InvalidGeneratorError`: 无效生成器异常，当函数未使用@param_generator装饰器标记时抛出
 - `CircularDependencyError`: 循环依赖异常，当检测到参数生成器之间存在循环依赖时抛出
 
-### 5. `src/dynamic_params/lazy.py` - 懒加载机制
+### 6. `src/dynamic_params/lazy.py` - 懒加载机制
 - `LazyResult`: 懒加载结果包装器，推迟参数生成直到实际需要
 - `generate_lazy_combinations`: 生成懒加载参数组合的函数
 - 提高性能，避免不必要的参数生成
 
-### 6. `src/dynamic_params/plugin.py` - pytest插件实现
+### 7. `src/dynamic_params/plugin.py` - pytest插件实现
 - `pytest_configure`: pytest配置钩子，注册插件标记
 - `pytest_generate_tests`: 生成测试参数钩子，处理动态参数生成
 - `pytest_runtest_setup`: 测试运行前设置钩子
 - `pytest_runtest_call`: 测试调用钩子，注入动态参数
 
-### 7. `src/dynamic_params/dependency.py` - 依赖解析引擎
+### 8. `src/dynamic_params/dependency.py` - 依赖解析引擎
 - `resolve_dependency_order`: 解析生成器间的依赖关系并按拓扑排序
 - `detect_circular_dependency`: 检测循环依赖并提供详细的错误信息
 - 实现了基于图论的依赖解析算法
 
-### 8. `src/dynamic_params/config.py` - 配置管理系统
+### 9. `src/dynamic_params/config.py` - 配置管理系统
 - `DynamicParamConfig`: 动态参数配置类
 - 管理缓存、作用域等配置选项
 - 支持多种配置源（命令行、配置文件、环境变量）
 
-### 9. `src/dynamic_params/utils.py` - 通用工具函数
+### 10. `src/dynamic_params/utils.py` - 通用工具函数
 - 提供参数处理、类型检查等通用功能
 - 包含辅助函数以简化开发
 

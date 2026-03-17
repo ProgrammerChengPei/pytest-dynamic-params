@@ -4,7 +4,7 @@
 
 import pytest
 
-from dynamic_params import dynamic_params, param_generator
+from dynamic_params import use_generators, param_generator
 from tests.utils import measure_execution_time, validate_performance_threshold
 
 
@@ -18,7 +18,7 @@ class TestIntegrationPerformance:
         def generate_value(x):
             return x * 2
 
-        @dynamic_params(doubled=generate_value)
+        @use_generators(doubled=generate_value)
         @pytest.mark.parametrize("x", [1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
         def test_func(x, doubled):
             assert doubled == x * 2
@@ -41,7 +41,7 @@ class TestIntegrationPerformance:
         def generate_derived(base):
             return base * 3
 
-        @dynamic_params(base=generate_base, derived=generate_derived)
+        @use_generators(base=generate_base, derived=generate_derived)
         def test_func(x, base, derived):
             assert base == x + 5
             assert derived == (x + 5) * 3
@@ -68,7 +68,7 @@ class TestIntegrationPerformance:
 
             generators[f"value_{i}"] = create_generator(i)
 
-        @dynamic_params(**generators)
+        @use_generators(**generators)
         def test_func(x, **kwargs):
             for i in range(5):
                 assert kwargs[f"value_{i}"] == x + i

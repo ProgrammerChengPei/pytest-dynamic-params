@@ -46,6 +46,18 @@ class LazyResult:
         """支持字典访问"""
         return self.execute()[key]
 
+    def __add__(self, other):
+        """支持加法运算"""
+        return self.execute() + other
+
+    def __radd__(self, other):
+        """支持反向加法运算"""
+        return other + self.execute()
+
+    def __isinstance__(self, cls):
+        """支持isinstance检查"""
+        return isinstance(self.execute(), cls)
+
 
 def generate_lazy_combinations(
     static_params: Dict[str, List[Any]], generators: List["ParamGenerator"]

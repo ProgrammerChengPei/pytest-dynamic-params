@@ -4,7 +4,7 @@
 """
 
 import pytest
-from dynamic_params import dynamic_params, param_generator
+from dynamic_params import use_generators, param_generator
 from dynamic_params.core.generator import ParamGenerator
 from dynamic_params.core.registry import GeneratorRegistry
 
@@ -12,6 +12,7 @@ from dynamic_params.core.registry import GeneratorRegistry
 # 测试参数生成器基本功能
 def test_param_generator_basic():
     """测试参数生成器的基本功能"""
+
     @param_generator
     def simple_generator():
         return "test"
@@ -26,6 +27,7 @@ def test_param_generator_basic():
 # 测试参数生成器依赖解析
 def test_param_generator_dependency_extraction():
     """测试参数生成器的依赖提取"""
+
     @param_generator
     def dependent_generator(a, b, c):
         return a + b + c
@@ -44,12 +46,13 @@ def test_param_generator_dependency_extraction():
 # 测试动态参数调用静态参数
 def test_dynamic_param_calls_static_param():
     """测试动态参数调用静态参数"""
+
     @param_generator
     def multiply_by_two(value):
         return value * 2
 
     # 模拟测试函数
-    @dynamic_params(result=multiply_by_two)
+    @use_generators(result=multiply_by_two)
     def test_func(value, result):
         assert result == value * 2
 
@@ -61,6 +64,7 @@ def test_dynamic_param_calls_static_param():
 # 测试动态参数调用动态参数
 def test_dynamic_param_calls_dynamic_param():
     """测试动态参数调用动态参数"""
+
     @param_generator
     def add_one(value):
         return value + 1
@@ -70,7 +74,7 @@ def test_dynamic_param_calls_dynamic_param():
         return add_one_result + 1
 
     # 模拟测试函数
-    @dynamic_params(result1=add_one, result2=add_two)
+    @use_generators(result1=add_one, result2=add_two)
     def test_func(value, result1, result2):
         assert result1 == value + 1
         assert result2 == value + 2
@@ -111,6 +115,7 @@ def test_param_generator_cache():
 # 测试参数生成器作用域
 def test_param_generator_scope():
     """测试参数生成器的作用域设置"""
+
     @param_generator(scope="session")
     def session_generator():
         return "session_value"
@@ -123,6 +128,7 @@ def test_param_generator_scope():
 # 测试参数生成器懒加载
 def test_param_generator_lazy():
     """测试参数生成器的懒加载功能"""
+
     @param_generator(lazy=True)
     def lazy_generator():
         return "lazy_value"
@@ -135,6 +141,7 @@ def test_param_generator_lazy():
 # 测试缺失参数错误处理
 def test_param_generator_missing_param():
     """测试参数生成器处理缺失参数的情况"""
+
     @param_generator
     def dependent_generator(a, b):
         return a + b
@@ -146,6 +153,7 @@ def test_param_generator_missing_param():
     # 测试缺失参数
     context = {"a": 1}  # 缺少 b
     from dynamic_params.errors import MissingParameterError
+
     with pytest.raises(MissingParameterError):
         generator.get_result(context)
 
@@ -153,7 +161,8 @@ def test_param_generator_missing_param():
 # 测试参数生成器执行错误处理
 def test_param_generator_execution_error():
     """测试参数生成器执行错误的情况"""
-    @param_generator
+
+    @param_generator(lazy=False)  # 禁用懒加载，以便立即抛出错误
     def error_generator():
         raise ValueError("Test error")
 
@@ -170,23 +179,24 @@ def test_param_generator_execution_error():
 # 测试参数生成器结果类型
 def test_param_generator_result_types():
     """测试参数生成器返回不同类型的结果"""
+
     # 测试返回字符串
-    @param_generator
+    @param_generator(lazy=False)  # 禁用懒加载，以便直接返回实际值
     def string_generator():
         return "string"
 
     # 测试返回数字
-    @param_generator
+    @param_generator(lazy=False)  # 禁用懒加载，以便直接返回实际值
     def number_generator():
         return 42
 
     # 测试返回列表
-    @param_generator
+    @param_generator(lazy=False)  # 禁用懒加载，以便直接返回实际值
     def list_generator():
         return [1, 2, 3]
 
     # 测试返回字典
-    @param_generator
+    @param_generator(lazy=False)  # 禁用懒加载，以便直接返回实际值
     def dict_generator():
         return {"key": "value"}
 
@@ -207,15 +217,16 @@ def test_param_generator_result_types():
 # 测试参数生成器依赖链
 def test_param_generator_dependency_chain():
     """测试参数生成器的依赖链"""
-    @param_generator
+
+    @param_generator(lazy=False)  # 禁用懒加载，以便直接返回实际值
     def level1():
         return 1
 
-    @param_generator
+    @param_generator(lazy=False)  # 禁用懒加载，以便直接返回实际值
     def level2(level1):
         return level1 + 1
 
-    @param_generator
+    @param_generator(lazy=False)  # 禁用懒加载，以便直接返回实际值
     def level3(level2):
         return level2 + 1
 

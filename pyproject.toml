@@ -1,6 +1,6 @@
 [project]
 name = "pytest-dynamic-params"
-version = "0.2.0"
+version = "0.3.0"
 description = "Dynamic parameters plugin for pytest"
 readme = "README.md"
 authors = [
@@ -44,7 +44,8 @@ dev = [
     "mypy",
     "bandit",
     "pre-commit",
-    "pytest-cov"
+    "pytest-cov",
+    "allure-pytest"
 ]
 
 [project.entry-points.pytest11]

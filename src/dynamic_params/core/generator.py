@@ -33,6 +33,18 @@ class ParamGenerator:
 
         registry = GeneratorRegistry.get_instance()
 
+        # 首先检查依赖是否存在
+        missing = [dep for dep in self.dependencies if dep not in context]
+        if missing:
+            from ..errors import MissingParameterError
+
+            raise MissingParameterError(
+                param_name=missing[0],
+                generator_name=self.func.__name__,
+                required_params=self.dependencies,
+                available_params=list(context.keys()),
+            )
+
         if not self.lazy_support:
             # 非懒加载模式，直接执行
             if self.cache_enabled:

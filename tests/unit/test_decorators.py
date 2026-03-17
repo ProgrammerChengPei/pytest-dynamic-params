@@ -4,7 +4,7 @@ import pytest
 
 from dynamic_params.decorators import (
     _ParamGeneratorDecorator,
-    dynamic_params,
+    use_generators,
     param_generator,
 )
 
@@ -106,10 +106,10 @@ class TestParamGenerator:
 
 
 class TestDynamicParams:
-    """dynamic_params装饰器的测试类"""
+    """use_generators装饰器的测试类"""
 
     def test_decorator(self):
-        """测试dynamic_params装饰器"""
+        """测试use_generators装饰器"""
 
         # 创建一个生成器函数
         @param_generator
@@ -119,8 +119,8 @@ class TestDynamicParams:
         def test_func(dynamic_param):
             return f"result: {dynamic_param}"
 
-        # 使用dynamic_params装饰测试函数
-        decorated_func = dynamic_params(dynamic_param=sample_generator)(test_func)
+        # 使用use_generators装饰测试函数
+        decorated_func = use_generators(dynamic_param=sample_generator)(test_func)
 
         # 验证装饰后的函数具有正确的属性
         assert hasattr(decorated_func, "_mapping")
@@ -130,7 +130,7 @@ class TestDynamicParams:
         assert decorated_func._mapping["dynamic_param"] == sample_generator
 
     def test_decorator_validation(self):
-        """测试dynamic_params装饰器验证功能"""
+        """测试use_generators装饰器验证功能"""
 
         def invalid_generator():  # 这不是一个用@param_generator装饰的函数
             return "not_a_generator"
@@ -140,20 +140,20 @@ class TestDynamicParams:
 
         # 应该抛出ValueError，因为invalid_generator不是用@param_generator装饰的
         with pytest.raises(ValueError):
-            dynamic_params(dynamic_param=invalid_generator)(test_func)
+            use_generators(dynamic_param=invalid_generator)(test_func)
 
     def test_callable_validation(self):
-        """测试dynamic_params装饰器的可调用性验证"""
+        """测试use_generators装饰器的可调用性验证"""
 
         def test_func(dynamic_param):
             return f"result: {dynamic_param}"
 
         # 应该抛出ValueError，因为字符串不是可调用的
         with pytest.raises(ValueError):
-            dynamic_params(dynamic_param="not_callable")(test_func)
+            use_generators(dynamic_param="not_callable")(test_func)
 
     def test_multiple_params(self):
-        """测试dynamic_params装饰器多参数"""
+        """测试use_generators装饰器多参数"""
 
         @param_generator
         def generator1():
@@ -166,7 +166,7 @@ class TestDynamicParams:
         def test_func(param1, param2):
             return f"{param1}, {param2}"
 
-        decorated_func = dynamic_params(param1=generator1, param2=generator2)(test_func)
+        decorated_func = use_generators(param1=generator1, param2=generator2)(test_func)
 
         assert "param1" in decorated_func._mapping
         assert "param2" in decorated_func._mapping
@@ -174,7 +174,7 @@ class TestDynamicParams:
         assert decorated_func._mapping["param2"] == generator2
 
     def test_dynamic_params_wrapper_preserves_name(self):
-        """测试dynamic_params装饰器保持函数名称"""
+        """测试use_generators装饰器保持函数名称"""
 
         @param_generator
         def sample_generator():
@@ -183,8 +183,8 @@ class TestDynamicParams:
         def test_func(dynamic_param):
             return f"result: {dynamic_param}"
 
-        # 使用dynamic_params装饰测试函数
-        decorated_func = dynamic_params(dynamic_param=sample_generator)(test_func)
+        # 使用use_generators装饰测试函数
+        decorated_func = use_generators(dynamic_param=sample_generator)(test_func)
 
         # 验证装饰后的函数保持原始名称
         assert decorated_func.__name__ == test_func.__name__

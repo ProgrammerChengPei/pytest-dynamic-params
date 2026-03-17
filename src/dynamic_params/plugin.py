@@ -11,6 +11,7 @@ def pytest_configure(config):
     """注册markers"""
     config.addinivalue_line("markers", "dynamic_param: 使用动态参数的测试")
     config.addinivalue_line("markers", "param_generator: 参数生成器函数")
+    config.addinivalue_line("markers", "dynamic_parametrize: 使用动态参数化的测试")
 
     # 加载和验证配置
     from .config import DynamicParamConfig
@@ -60,6 +61,23 @@ def pytest_configure(config):
 def pytest_generate_tests(metafunc):
     """pytest钩子：生成测试参数"""
     print(f"Checking {metafunc.function.__name__} for dynamic params")
+
+    # 先处理 dynamic_parametrize 装饰器
+    if hasattr(metafunc.function, "_requires_dynamic_parametrize"):
+        print(f"Processing dynamic_parametrize for {metafunc.function.__name__}")
+        parametrize_info = getattr(metafunc.function, "_dynamic_parametrize", [])
+
+        for info in parametrize_info:
+            param_args = info["args"]
+            param_kwargs = info["kwargs"]
+
+            # 处理参数化
+            metafunc.parametrize(*param_args, **param_kwargs)
+
+        # 标记测试函数需要处理 DynRef
+        metafunc.function._needs_dynamic_parametrize = True
+        return
+
     # 检查是否需要动态参数
     if not hasattr(metafunc.function, "_requires"):
         print(f"No dynamic params found in {metafunc.function.__name__}")
@@ -107,6 +125,9 @@ def pytest_generate_tests(metafunc):
     # 标记测试函数需要动态参数处理
     metafunc.function._needs_dynamic_params = True
 
+    # 标记测试函数有动态参数映射
+    metafunc.function._dynamic_param_mapping = param_mapping
+
 
 def pytest_runtest_setup(item):
     """在测试运行前设置动态参数"""
@@ -127,12 +148,53 @@ def pytest_runtest_setup(item):
 def pytest_runtest_call(item):
     """在测试调用前处理动态参数"""
     # 检查是否需要处理动态参数
-    if not getattr(item, "_needs_dynamic_params", False):
+    needs_dynamic_params = getattr(item, "_needs_dynamic_params", False)
+    needs_dynamic_parametrize = getattr(item, "_needs_dynamic_parametrize", False)
+    if not needs_dynamic_params and not needs_dynamic_parametrize:
         return
 
     test_func = getattr(item, "function", None)
     if not test_func:
         return
+
+    # 处理 dynamic_parametrize 装饰器的 DynRef
+    if getattr(item, "_needs_dynamic_parametrize", False):
+        print(f"Processing DynRef for {test_func.__name__}")
+
+        # 收集上下文
+        context = {}
+        request = getattr(item, "_request", None)
+
+        if request:
+            # 收集所有fixture值
+            for fixturename in getattr(item, "fixturenames", []):
+                try:
+                    context[fixturename] = request.getfixturevalue(fixturename)
+                except pytest.FixtureLookupError:
+                    pass
+
+            # 收集静态参数
+            for param_name, value in request.node.funcargs.items():
+                if param_name not in context:
+                    context[param_name] = value
+
+        # 处理 funcargs 中的 DynRef
+        if hasattr(item, "funcargs"):
+            for param_name, value in list(item.funcargs.items()):
+                from .decorators import DynRef
+
+                if isinstance(value, DynRef):
+                    try:
+                        resolved_value = value.resolve(context, request)
+                        item.funcargs[param_name] = resolved_value
+                        context[param_name] = resolved_value
+                    except Exception as e:
+                        print(f"Error resolving DynRef for {param_name}: {e}")
+                        item.funcargs[param_name] = None
+
+        # 如果只是处理 dynamic_parametrize，就直接返回
+        if not getattr(item, "_needs_dynamic_params", False):
+            return
 
     param_mapping = getattr(test_func, "_mapping", {})
     if not param_mapping:
@@ -173,6 +235,45 @@ def pytest_runtest_call(item):
         for param_name, value in request.node.funcargs.items():
             if param_name not in context:
                 context[param_name] = value
+
+    # 处理静态参数调用动态参数的情况
+    # 检查funcargs中是否有需要动态解析的表达式
+    if hasattr(item, "funcargs"):
+        for param_name, value in list(item.funcargs.items()):
+            # 检查是否是表达式字符串，需要动态解析
+            if isinstance(value, str) and "==" in value:
+                # 尝试解析表达式
+                try:
+                    # 替换表达式中的生成器调用
+                    import re
+
+                    # 查找形如 calculate_result 的生成器调用
+                    generator_calls = re.findall(r"\b(\w+)\s*\(.*?\)", value)
+                    for generator_name in generator_calls:
+                        # 检查是否是生成器
+                        for gen in generators:
+                            if gen.func.__name__ == generator_name:
+                                # 生成器存在，执行它
+                                gen_context = context.copy()
+                                # 确保所有依赖都在上下文中
+                                for dep in gen.dependencies:
+                                    if dep in context:
+                                        gen_context[dep] = context[dep]
+                                # 执行生成器
+                                gen_result = gen.get_result(gen_context)
+                                if isinstance(gen_result, LazyResult):
+                                    gen_result = gen_result.execute()
+                                # 将生成器结果添加到上下文
+                                context[generator_name] = gen_result
+                                # 替换表达式中的生成器调用为结果
+                                value = value.replace(
+                                    f"{generator_name}()", str(gen_result)
+                                )
+                    # 尝试执行表达式
+                    exec(f"result = {value}", {}, context)
+                    item.funcargs[param_name] = context["result"]
+                except Exception as e:
+                    print(f"Error evaluating expression for {param_name}: {e}")
 
     # 为每个动态参数生成值（按依赖顺序）
     for generator in ordered_generators:

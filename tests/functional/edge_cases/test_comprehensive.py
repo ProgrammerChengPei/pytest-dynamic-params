@@ -5,7 +5,7 @@
 
 import pytest
 
-from dynamic_params import dynamic_params, param_generator
+from dynamic_params import use_generators, param_generator
 
 
 @param_generator
@@ -55,7 +55,7 @@ def handle_complex_input(data):
 class TestEdgeCasesComprehensive:
     """综合边界情况测试类"""
 
-    @dynamic_params(result=handle_edge_cases)
+    @use_generators(result=handle_edge_cases)
     @pytest.mark.parametrize(
         "value",
         [
@@ -93,7 +93,7 @@ class TestEdgeCasesComprehensive:
         else:
             assert result == f"normal_{value}"
 
-    @dynamic_params(exception_result=handle_exception_input)
+    @use_generators(exception_result=handle_exception_input)
     @pytest.mark.parametrize(
         "value",
         [
@@ -116,7 +116,7 @@ class TestEdgeCasesComprehensive:
         else:
             assert exception_result == 10 / value
 
-    @dynamic_params(result=handle_complex_input)
+    @use_generators(result=handle_complex_input)
     @pytest.mark.parametrize(
         "data",
         [
@@ -143,7 +143,7 @@ class TestEdgeCasesComprehensive:
         else:
             assert result == f"type_{type(data).__name__}"
 
-    @dynamic_params(result=handle_edge_cases)
+    @use_generators(result=handle_edge_cases)
     @pytest.mark.parametrize(
         "value",
         [

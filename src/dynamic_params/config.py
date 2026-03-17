@@ -59,33 +59,48 @@ class DynamicParamConfig:
                 except Exception as e:
                     print(f"Warning: Failed to read {config_file}: {e}")
 
-        # 从环境变量加载（优先级最高）
-        self._update_from_env(config)
+        # 处理 pytest.dynamic_params 格式的配置节
+        if "pytest.dynamic_params" in config:
+            # 提取配置项并添加到相应的节
+            for key, value in config["pytest.dynamic_params"].items():
+                if key == "markers":
+                    # markers 特殊处理
+                    if "markers" not in config:
+                        config["markers"] = {}
+                    config["markers"][key] = value
+                elif key.startswith("cache_size_"):
+                    # 缓存大小配置
+                    cache_section = key.replace("cache_size_", "size_")
+                    if "cache" not in config:
+                        config["cache"] = {}
+                    config["cache"][cache_section] = value
+                elif key == "validation":
+                    # 验证级别
+                    if "validation" not in config:
+                        config["validation"] = {}
+                    config["validation"]["level"] = value
+                elif key == "log_level":
+                    # 日志级别
+                    if "validation" not in config:
+                        config["validation"] = {}
+                    config["validation"]["log_level"] = value
+                elif key == "lazy_loading":
+                    # 懒加载
+                    if "performance" not in config:
+                        config["performance"] = {}
+                    config["performance"]["lazy_loading"] = value
+                elif key == "incremental_generation":
+                    # 增量生成
+                    if "performance" not in config:
+                        config["performance"] = {}
+                    config["performance"]["incremental_generation"] = value
+                elif key == "cache_enabled":
+                    # 缓存启用
+                    if "cache" not in config:
+                        config["cache"] = {}
+                    config["cache"]["enabled"] = value
 
         return self._normalize_config(config)
-
-    def _update_from_env(self, config: configparser.ConfigParser):
-        """从环境变量更新配置"""
-        env_mapping = {
-            "PYTEST_DYNAMIC_PARAM_CACHE": "cache.enabled",
-            "PYTEST_DYNAMIC_PARAM_VALIDATION": "validation.level",
-            "PYTEST_DYNAMIC_PARAM_LOG_LEVEL": "validation.log_level",
-            "PYTEST_DYNAMIC_PARAM_LAZY_LOADING": "performance.lazy_loading",
-            "PYTEST_DYNAMIC_PARAM_INCREMENTAL": "performance.incremental_generation",
-            "PYTEST_DYNAMIC_PARAM_DEBUG": "debug.enabled",
-            "PYTEST_DYNAMIC_PARAM_PROFILE": "debug.profile",
-            "PYTEST_DYNAMIC_PARAM_CACHE_DIR": "cache.dir",
-        }
-
-        for env_var, config_key in env_mapping.items():
-            if env_var in os.environ:
-                try:
-                    section, option = config_key.split(".")
-                    if section not in config:
-                        config[section] = {}
-                    config[section][option] = os.environ[env_var]
-                except Exception as e:
-                    print(f"Warning: Failed to update config from {env_var}: {e}")
 
     def _normalize_config(self, config: configparser.ConfigParser) -> Dict[str, Any]:
         """标准化配置值"""

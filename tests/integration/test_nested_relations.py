@@ -4,18 +4,20 @@
 """
 
 import pytest
-from dynamic_params import dynamic_params, param_generator
+from dynamic_params import use_generators, param_generator
 
 
 # 1. 静态参数调用静态参数
 def test_static_param_calls_static_param():
     """测试静态参数调用静态参数"""
+
     @pytest.mark.parametrize("c", [5, 6])
     @pytest.mark.parametrize("a, b", [(1, 2), (3, 4)])
     def test_func(a, b, c):
         assert isinstance(a, int)
         assert isinstance(b, int)
         assert isinstance(c, int)
+
     # 直接调用测试函数验证
     test_func(1, 2, 5)
     test_func(3, 4, 6)
@@ -30,10 +32,12 @@ def calculate_result(input_value):
 
 def test_static_param_calls_dynamic_param():
     """测试静态参数调用动态参数"""
-    @dynamic_params(result=calculate_result)
+
+    @use_generators(result=calculate_result)
     @pytest.mark.parametrize("input_value", [1, 2, 3])
     def test_func(input_value, result):
         assert result == input_value * 2
+
     # 使用动态参数替代静态参数调用动态参数的方式
     test_func(1, 2)
     test_func(2, 4)
@@ -49,12 +53,14 @@ def a_b():
 
 def test_static_param_calls_static_fixture():
     """测试静态参数调用静态fixture"""
+
     @pytest.mark.parametrize("c", [5, 6])
     @pytest.mark.parametrize("a, b", [(1, 2), (3, 4)])  # 直接使用静态数据
     def test_func(a, b, c):
         assert isinstance(a, int)
         assert isinstance(b, int)
         assert isinstance(c, int)
+
     # 直接调用测试函数验证
     test_func(1, 2, 5)
     test_func(3, 4, 6)
@@ -69,12 +75,14 @@ def dynamic_a_b(request):
 
 def test_static_param_calls_dynamic_fixture():
     """测试静态参数调用动态fixture"""
+
     @pytest.mark.parametrize("c", [5, 6])
     @pytest.mark.parametrize("a, b", [(1, 2), (2, 3)])  # 直接使用静态数据
     def test_func(a, b, c):
         assert isinstance(a, int)
         assert isinstance(b, int)
         assert isinstance(c, int)
+
     # 直接调用测试函数验证
     test_func(1, 2, 5)
     test_func(2, 3, 6)
@@ -89,10 +97,12 @@ def dynamic_param_with_static_param(input_value):
 
 def test_dynamic_param_calls_static_param():
     """测试动态参数调用静态参数"""
-    @dynamic_params(result=dynamic_param_with_static_param)
+
+    @use_generators(result=dynamic_param_with_static_param)
     @pytest.mark.parametrize("input_value", [1, 2, 3])
     def test_func(input_value, result):
         assert result == input_value * 2
+
     # 直接调用测试函数验证
     test_func(1, 2)
     test_func(2, 4)
@@ -108,11 +118,13 @@ def generate_derived_value(calculate_result):
 
 def test_dynamic_param_calls_dynamic_param():
     """测试动态参数调用动态参数"""
-    @dynamic_params(result=calculate_result, derived=generate_derived_value)
+
+    @use_generators(result=calculate_result, derived=generate_derived_value)
     @pytest.mark.parametrize("input_value", [1, 2])
     def test_func(input_value, result, derived):
         assert result == input_value * 2
         assert derived == result * 10
+
     # 直接调用测试函数验证
     test_func(1, 2, 20)
     test_func(2, 4, 40)
@@ -133,9 +145,11 @@ def generate_test_data(base_config):
 
 def test_dynamic_param_calls_static_fixture():
     """测试动态参数调用静态fixture"""
-    @dynamic_params(test_data=generate_test_data)
+
+    @use_generators(test_data=generate_test_data)
     def test_func(base_config, test_data):
         assert test_data["config"] == base_config
+
     # 直接调用测试函数验证
     config = {"base": "config"}
     test_func(config, {"app_name": "test", "config": config})
@@ -156,10 +170,12 @@ def double(number, multiplier):
 
 def test_dynamic_param_calls_dynamic_fixture():
     """测试动态参数调用动态fixture"""
-    @dynamic_params(result=double)
+
+    @use_generators(result=double)
     @pytest.mark.parametrize("multiplier", [10, 20])
     def test_func(number, multiplier, result):
         assert result == number * multiplier
+
     # 直接调用测试函数验证
     test_func(1, 10, 10)
     test_func(2, 20, 40)
@@ -174,9 +190,11 @@ def db_config(base_config):
 
 def test_static_fixture_calls_static_fixture():
     """测试静态fixture调用静态fixture"""
+
     def test_func(db_config):
         assert db_config["base"] == "config"
         assert db_config["db"] == "postgresql"
+
     # 直接调用测试函数验证
     test_func({"base": "config", "db": "postgresql"})
 
@@ -191,51 +209,54 @@ def environment(request):
 @pytest.fixture
 def app_config(environment, db_config):
     """依赖动态fixture的静态fixture"""
-    return {
-        "env": environment,
-        "db": db_config,
-        "debug": environment == "dev"
-    }
+    return {"env": environment, "db": db_config, "debug": environment == "dev"}
 
 
 def test_static_fixture_calls_dynamic_fixture():
     """测试静态fixture调用动态fixture"""
+
     def test_func(app_config):
         assert "env" in app_config
         assert "db" in app_config
+
     # 直接调用测试函数验证
-    test_func({"env": "dev", "db": {"base": "config", "db": "postgresql"}, "debug": True})
+    test_func(
+        {"env": "dev", "db": {"base": "config", "db": "postgresql"}, "debug": True}
+    )
 
 
 # 11. 静态fixture调用静态参数
-@pytest.fixture
-@pytest.mark.parametrize("input_value", [10.0, 20.0])
-def formatted_value(input_value):
+@pytest.fixture(params=[10.0, 20.0])
+def formatted_value(request):
     """依赖静态参数的静态fixture"""
-    return int(input_value)
+    return int(request.param)
 
 
 def test_static_fixture_calls_static_param():
     """测试静态fixture调用静态参数"""
+
     def test_func(formatted_value):
         assert isinstance(formatted_value, int)
+
     # 直接调用测试函数验证
     test_func(10)
     test_func(20)
 
 
 # 12. 静态fixture调用动态参数
-@pytest.fixture
-@pytest.mark.parametrize("input_value", [1, 2, 3])
-def validate_status(input_value, calculate_result):
+@pytest.fixture(params=[1, 2, 3])
+def validate_status(request, calculate_result):
     """依赖动态参数的静态fixture"""
+    input_value = request.param
     return input_value * 2 == calculate_result
 
 
 def test_static_fixture_calls_dynamic_param():
     """测试静态fixture调用动态参数"""
+
     def test_func(validate_status):
         assert validate_status
+
     # 直接调用测试函数验证
     test_func(True)
 
@@ -249,8 +270,10 @@ def dynamic_fixture_with_static_param(request, input_value):
 
 def test_dynamic_fixture_calls_static_param():
     """测试动态fixture调用静态参数"""
+
     def test_func(input_value, dynamic_fixture_with_static_param):
         assert isinstance(dynamic_fixture_with_static_param, int)
+
     # 直接调用测试函数验证
     test_func(1, 2)  # 1 + 1
     test_func(2, 4)  # 2 + 2
@@ -272,8 +295,10 @@ def dynamic_fixture_with_dynamic_param(request):
 
 def test_dynamic_fixture_calls_dynamic_param():
     """测试动态fixture调用动态参数"""
+
     def test_func(input_value, dynamic_fixture_with_dynamic_param):
         assert isinstance(dynamic_fixture_with_dynamic_param, int)
+
     # 直接调用测试函数验证
     test_func(1, 0)  # 0 * 1
     test_func(2, 2)  # 1 * 2
@@ -288,9 +313,11 @@ def env_config(request, base_config):
 
 def test_dynamic_fixture_calls_static_fixture():
     """测试动态fixture调用静态fixture"""
+
     def test_func(env_config):
         assert "base" in env_config
         assert "env" in env_config
+
     # 直接调用测试函数验证
     test_func({"base": "config", "env": "dev"})
 
@@ -304,9 +331,11 @@ def app_config_with_env(request, env_config):
 
 def test_dynamic_fixture_calls_dynamic_fixture():
     """测试动态fixture调用动态fixture"""
+
     def test_func(app_config_with_env):
         assert "base" in app_config_with_env
         assert "env" in app_config_with_env
         assert "app" in app_config_with_env
+
     # 直接调用测试函数验证
     test_func({"db": "dev", "base": "config", "env": "dev", "app": "test"})
