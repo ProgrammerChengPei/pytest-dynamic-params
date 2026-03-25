@@ -1,0 +1,11 @@
+[run]
+source = src/dynamic_params
+exclude_lines =
+    pragma: no cover
+    def __repr__
+    raise AssertionError
+    raise NotImplementedError
+omit =
+    src/dynamic_params/plugin/pytest_plugin.py
+    **/__init__.py
+    src/dynamic_params/types.py

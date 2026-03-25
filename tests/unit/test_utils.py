@@ -1,10 +1,7 @@
 """工具函数模块的单元测试"""
 
-from dynamic_params.utils import (
-    get_function_signature,
-    normalize_param_value,
-    validate_param_name,
-)
+from dynamic_params import normalize_param_value, validate_param_name
+from dynamic_params.utils.helpers import get_function_signature
 
 
 class TestGetFunctionSignature:
@@ -18,8 +15,9 @@ class TestGetFunctionSignature:
 
         signature = get_function_signature(sample_func)
 
-        assert "sample_func" in signature
-        assert "(a, b, c=10)" in signature
+        # 检查签名的字符串表示
+        signature_str = str(signature)
+        assert "(a, b, c=10)" in signature_str
 
     def test_get_function_signature_no_params(self):
         """测试无参函数的签名"""
@@ -29,8 +27,9 @@ class TestGetFunctionSignature:
 
         signature = get_function_signature(no_param_func)
 
-        assert "no_param_func" in signature
-        assert "()" in signature
+        # 检查签名的字符串表示
+        signature_str = str(signature)
+        assert "()" in signature_str
 
 
 class TestValidateParamName:

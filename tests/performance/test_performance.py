@@ -7,7 +7,7 @@ import random
 
 import pytest
 
-from dynamic_params import dynamic_params, param_generator
+from dynamic_params import generator, use_generators
 from tests.utils import (
     TestClass,
     measure_execution_time,
@@ -39,11 +39,11 @@ class TestPerformance:
         """测试大量参数组合的性能"""
 
         # 创建一个简单的参数生成器
-        @param_generator
+        @generator
         def generate_numbers(n):
             return n * 2
 
-        @dynamic_params(doubled=generate_numbers)
+        @use_generators(doubled=generate_numbers)
         @pytest.mark.parametrize("n", list(range(100)))  # 100个参数值
         def test_large_combinations(n, doubled):
             assert doubled == n * 2
@@ -62,7 +62,7 @@ class TestPerformance:
         generators = {}
         for i in range(10):
 
-            @param_generator
+            @generator
             def generate_data(input_val, i=i):
                 return input_val + i
 
@@ -70,7 +70,7 @@ class TestPerformance:
 
         # 测试函数
         def make_test_func(gen_dict):
-            @dynamic_params(**gen_dict)
+            @use_generators(**gen_dict)
             @pytest.mark.parametrize("input_val", [1, 2, 3, 4, 5])
             def test_func(input_val, **kwargs):
                 for i in range(10):
@@ -91,11 +91,11 @@ class TestPerformance:
         """测试缓存机制的性能优势"""
 
         # 注意：缓存功能可能在插件的其他部分实现，这里我们只测试基本功能
-        @param_generator(cache=True)  # 启用缓存
+        @generator(cache=True)  # 启用缓存
         def cached_generator(x):
             return x * 2
 
-        @dynamic_params(result=cached_generator)
+        @use_generators(result=cached_generator)
         def test_func(x, result):
             assert result == x * 2
 
@@ -112,7 +112,7 @@ class TestPerformance:
         """测试不使用缓存的性能（对比）"""
         call_count = 0
 
-        @param_generator(cache=False)  # 不启用缓存
+        @generator(cache=False)  # 不启用缓存
         def uncached_generator(x):
             nonlocal call_count
             call_count += 1
@@ -140,15 +140,15 @@ class TestPerformance:
     def test_nested_generators_performance(self):
         """测试嵌套生成器的性能"""
 
-        @param_generator
+        @generator
         def generate_base(x):
             return x + 10
 
-        @param_generator
+        @generator
         def generate_transformed(base_value):  # 依赖于另一个生成器
             return base_value * 2
 
-        @dynamic_params(
+        @use_generators(
             base_value=generate_base, transformed_value=generate_transformed
         )
         @pytest.mark.parametrize("x", list(range(50)))  # 50个输入值
@@ -166,12 +166,12 @@ class TestPerformance:
     def test_memory_usage_stability(self):
         """测试内存使用稳定性（间接测试）"""
 
-        @param_generator
+        @generator
         def generate_list(n):
             # 创建一个较大的列表来测试内存管理
             return list(range(n))
 
-        @dynamic_params(big_list=generate_list)
+        @use_generators(big_list=generate_list)
         @pytest.mark.parametrize("n", [10, 50, 100])  # 不同大小的列表
         def test_memory(n, big_list):
             assert len(big_list) == n
@@ -189,7 +189,7 @@ class TestPerformance:
     def test_concurrent_access_simulation(self):
         """模拟并发访问场景的性能（通过快速连续调用）"""
 
-        @param_generator
+        @generator
         def compute_heavy_task(x):
             # 模拟一些计算密集型任务
             result = 0
@@ -197,7 +197,7 @@ class TestPerformance:
                 result += x * i
             return result
 
-        @dynamic_params(heavy_result=compute_heavy_task)
+        @use_generators(heavy_result=compute_heavy_task)
         @pytest.mark.parametrize("x", list(range(20)))
         def test_concurrent_simulation(x, heavy_result):
             expected = sum(x * i for i in range(100))
@@ -214,35 +214,35 @@ class TestPerformance:
         """测试不同类型参数的性能"""
 
         # 测试字符串类型
-        @param_generator
+        @generator
         def process_string(s):
             return s.upper()
 
         # 测试复杂数据结构
-        @param_generator
+        @generator
         def process_dict(d):
             return {k: v * 2 for k, v in d.items()}
 
         # 测试对象类型
-        @param_generator
+        @generator
         def process_object(obj):
             return obj.value * 3
 
         # 测试字符串参数
-        @dynamic_params(uppercase=process_string)
+        @use_generators(uppercase=process_string)
         @pytest.mark.parametrize("s", ["test", "performance", "dynamic", "parameter"])
         def test_string_params(s, uppercase):
             assert uppercase == s.upper()
 
         # 测试字典参数
-        @dynamic_params(processed=process_dict)
+        @use_generators(processed=process_dict)
         @pytest.mark.parametrize("d", [{"a": 1, "b": 2}, {"x": 10, "y": 20}])
         def test_dict_params(d, processed):
             expected = {k: v * 2 for k, v in d.items()}
             assert processed == expected
 
         # 测试对象参数
-        @dynamic_params(processed=process_object)
+        @use_generators(processed=process_object)
         @pytest.mark.parametrize("obj", [TestClass(1), TestClass(2), TestClass(3)])
         def test_object_params(obj, processed):
             assert processed == obj.value * 3
@@ -269,19 +269,19 @@ class TestPerformance:
         """测试不同缓存策略的性能"""
 
         # 测试缓存与非缓存的性能对比
-        @param_generator(cache=True)
+        @generator(cache=True)
         def cached_generator(x):
             return x * 2
 
-        @param_generator(cache=False)
+        @generator(cache=False)
         def uncached_generator(x):
             return x * 2
 
-        @dynamic_params(result=cached_generator)
+        @use_generators(result=cached_generator)
         def test_cached_func(x, result):
             assert result == x * 2
 
-        @dynamic_params(result=uncached_generator)
+        @use_generators(result=uncached_generator)
         def test_uncached_func(x, result):
             assert result == x * 2
 
@@ -311,7 +311,7 @@ class TestPerformance:
         from tests.utils.performance import measure_memory_usage
 
         # 测试生成大对象时的内存使用
-        @param_generator
+        @generator
         def generate_large_list(n):
             # 创建一个较大的列表
             return list(range(n))
@@ -334,7 +334,7 @@ class TestPerformance:
             print(f"列表大小 {size}: 内存增长 {memory_increase:.2f} MB")
 
         # 测试缓存对内存使用的影响
-        @param_generator(cache=True)
+        @generator(cache=True)
         def cached_generator(x):
             return list(range(x))
 

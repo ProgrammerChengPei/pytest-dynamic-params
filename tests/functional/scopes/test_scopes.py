@@ -3,22 +3,22 @@
 对应需求文档中关于作用域管理的部分
 """
 
-from dynamic_params import dynamic_params, param_generator
+from dynamic_params import generator, use_generators
 
 
-@param_generator(scope="function")
+@generator(scope="function")
 def func_scope_data():
     """函数作用域生成器"""
     return "function_data"
 
 
-@param_generator(scope="class")
+@generator(scope="class")
 def class_scope_data():
     """类作用域生成器"""
     return "class_data"
 
 
-@param_generator(scope="module")
+@generator(scope="module")
 def module_scope_data():
     """模块作用域生成器"""
     return "module_data"
@@ -27,7 +27,7 @@ def module_scope_data():
 class TestScopes:
     """测试不同作用域的测试类"""
 
-    @dynamic_params(
+    @use_generators(
         func_data=func_scope_data,
         class_data=class_scope_data,
         mod_data=module_scope_data,
@@ -38,7 +38,7 @@ class TestScopes:
         assert class_data == "class_data"
         assert mod_data == "module_data"
 
-    @dynamic_params(
+    @use_generators(
         func_data=func_scope_data,
         class_data=class_scope_data,
         mod_data=module_scope_data,

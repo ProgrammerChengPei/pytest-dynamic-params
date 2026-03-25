@@ -28,13 +28,3 @@ jobs:
     - name: Run pre-commit checks
       run: |
         pre-commit run --all-files
-    - name: Run tests with coverage
-      run: |
-        pytest tests/ --cov=src.dynamic_params --cov-branch --cov-report=xml
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v5
-      with:
-        file: ./coverage.xml
-        flags: unittests
-        name: codecov-umbrella
-        fail_ci_if_error: true

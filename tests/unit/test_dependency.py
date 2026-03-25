@@ -2,8 +2,10 @@
 
 import pytest
 
-from dynamic_params.core.generator import ParamGenerator
-from dynamic_params.dependency import CircularDependencyError, resolve_dependency_order
+from dynamic_params import CircularDependencyError, Generator, resolve_dependency_order
+
+# 为了测试兼容性，使用 Generator 类
+ParamGenerator = Generator
 
 
 class TestResolveDependencyOrder:
@@ -20,7 +22,7 @@ class TestResolveDependencyOrder:
         result = resolve_dependency_order([gen_a])
 
         assert len(result) == 1
-        assert result[0].param_name == "a"
+        assert result[0].name == "a"
 
     def test_simple_chain(self):
         """测试简单依赖链"""
@@ -38,8 +40,8 @@ class TestResolveDependencyOrder:
         result = resolve_dependency_order([gen_b, gen_a])
 
         assert len(result) == 2
-        assert result[0].param_name == "a"  # a没有依赖，应该先执行
-        assert result[1].param_name == "b"  # b依赖a，应该后执行
+        assert result[0].name == "a"  # a没有依赖，应该先执行
+        assert result[1].name == "b"  # b依赖a，应该后执行
 
     def test_multiple_dependencies(self):
         """测试多重依赖"""
@@ -60,9 +62,9 @@ class TestResolveDependencyOrder:
         result = resolve_dependency_order([gen_c, gen_a, gen_b])
 
         # c依赖a和b，所以a和b应该在c之前
-        assert result[2].param_name == "c"  # c应该在最后
+        assert result[2].name == "c"  # c应该在最后
         # a和b之间没有依赖关系，顺序不重要
-        assert set([result[0].param_name, result[1].param_name]) == {"a", "b"}
+        assert set([result[0].name, result[1].name]) == {"a", "b"}
 
     def test_complex_chain(self):
         """测试复杂依赖链 a->b->c"""
@@ -83,9 +85,9 @@ class TestResolveDependencyOrder:
         result = resolve_dependency_order([gen_c, gen_a, gen_b])
 
         # 应该是 a, b, c 的顺序
-        assert result[0].param_name == "a"
-        assert result[1].param_name == "b"
-        assert result[2].param_name == "c"
+        assert result[0].name == "a"
+        assert result[1].name == "b"
+        assert result[2].name == "c"
 
     def test_circular_dependency_error_properties(self):
         """测试循环依赖错误的属性"""

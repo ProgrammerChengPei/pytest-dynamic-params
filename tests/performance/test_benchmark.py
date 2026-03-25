@@ -2,7 +2,7 @@
 使用pytest-benchmark的基准测试
 """
 
-from dynamic_params import dynamic_params, param_generator
+from dynamic_params import generator, use_generators
 
 
 class TestBenchmark:
@@ -11,11 +11,11 @@ class TestBenchmark:
     def test_simple_generator_benchmark(self, benchmark):
         """测试简单生成器的性能基准"""
 
-        @param_generator
+        @generator
         def simple_gen(x):
             return x + 1
 
-        @dynamic_params(result=simple_gen)
+        @use_generators(result=simple_gen)
         def test_func(x, result):
             assert result == x + 1
 
@@ -25,15 +25,15 @@ class TestBenchmark:
     def test_multiple_generators_benchmark(self, benchmark):
         """测试多个生成器的性能基准"""
 
-        @param_generator
+        @generator
         def gen1(x):
             return x * 2
 
-        @param_generator
+        @generator
         def gen2(x):
             return x + 10
 
-        @dynamic_params(doubled=gen1, added=gen2)
+        @use_generators(doubled=gen1, added=gen2)
         def test_func(x, doubled, added):
             assert doubled == x * 2
             assert added == x + 10
@@ -43,7 +43,7 @@ class TestBenchmark:
     def test_cached_generator_benchmark(self, benchmark):
         """测试带缓存的生成器性能基准"""
 
-        @param_generator(cache=True)
+        @generator(cache=True)
         def cached_gen(x):
             # 模拟一些计算
             result = 0
@@ -51,7 +51,7 @@ class TestBenchmark:
                 result += x * i
             return result
 
-        @dynamic_params(result=cached_gen)
+        @use_generators(result=cached_gen)
         def test_func(x, result):
             expected = sum(x * i for i in range(10))
             assert result == expected
@@ -61,15 +61,15 @@ class TestBenchmark:
     def test_nested_generators_benchmark(self, benchmark):
         """测试嵌套生成器的性能基准"""
 
-        @param_generator
+        @generator
         def base_gen(x):
             return x + 5
 
-        @param_generator
+        @generator
         def derived_gen(base):
             return base * 3
 
-        @dynamic_params(base=base_gen, derived=derived_gen)
+        @use_generators(base=base_gen, derived=derived_gen)
         def test_func(x, base, derived):
             assert base == x + 5
             assert derived == (x + 5) * 3
@@ -79,11 +79,11 @@ class TestBenchmark:
     def test_different_parameter_types_benchmark(self, benchmark):
         """测试不同类型参数的性能基准"""
 
-        @param_generator
+        @generator
         def process_string(s):
             return s.upper()
 
-        @dynamic_params(uppercase=process_string)
+        @use_generators(uppercase=process_string)
         def test_func(s, uppercase):
             assert uppercase == s.upper()
 

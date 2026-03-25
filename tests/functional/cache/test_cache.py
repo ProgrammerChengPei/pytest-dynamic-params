@@ -5,13 +5,13 @@
 
 import pytest
 
-from dynamic_params import dynamic_params, param_generator
+from dynamic_params import generator, use_generators
 
 # 计数器用于跟踪函数调用次数
 call_counts = {}
 
 
-@param_generator(scope="function", cache=True)  # 启用缓存
+@generator(scope="function", cache=True)  # 启用缓存
 def cached_function_data(input_value):
     """函数作用域带缓存的数据生成器"""
     key = f"cached_function_data_{input_value}"
@@ -19,7 +19,7 @@ def cached_function_data(input_value):
     return f"function_cached_{input_value}_{call_counts[key]}"
 
 
-@param_generator(scope="class", cache=True)  # 启用缓存
+@generator(scope="class", cache=True)  # 启用缓存
 def cached_class_data(input_value):
     """类作用域带缓存的数据生成器"""
     key = f"cached_class_data_{input_value}"
@@ -34,7 +34,7 @@ class TestCacheFunctionality:
         """每次测试前清空计数器"""
         call_counts.clear()
 
-    @dynamic_params(cached_data=cached_function_data)
+    @use_generators(cached_data=cached_function_data)
     @pytest.mark.parametrize("input_value", [1, 2, 1])  # 注意：1重复出现
     def test_function_scope_cache(self, input_value, cached_data):
         """测试函数作用域缓存 - 相同参数应该产生不同的结果（因为函数作用域不跨测试缓存）"""
@@ -42,7 +42,7 @@ class TestCacheFunctionality:
         assert cached_data.startswith("function_cached_")
         assert str(input_value) in cached_data
 
-    @dynamic_params(class_cached=cached_class_data)
+    @use_generators(class_cached=cached_class_data)
     @pytest.mark.parametrize("input_value", [1, 2, 1])  # 注意：1重复出现
     def test_class_scope_cache_reuse(self, input_value, class_cached):
         """测试类作用域缓存 - 相同参数应该复用缓存结果"""
@@ -50,7 +50,7 @@ class TestCacheFunctionality:
         assert str(input_value) in class_cached
 
 
-@param_generator(scope="function", cache=False)  # 禁用缓存
+@generator(scope="function", cache=False)  # 禁用缓存
 def uncached_function_data(input_value):
     """函数作用域不带缓存的数据生成器"""
     key = f"uncached_function_data_{input_value}"
@@ -65,7 +65,7 @@ class TestNoCacheFunctionality:
         """每次测试前清空计数器"""
         call_counts.clear()
 
-    @dynamic_params(uncached_data=uncached_function_data)
+    @use_generators(uncached_data=uncached_function_data)
     @pytest.mark.parametrize("input_value", [1, 1, 1])  # 相同参数多次出现
     def test_no_cache_always_executes(self, input_value, uncached_data):
         """测试禁用缓存时每次都执行生成器"""

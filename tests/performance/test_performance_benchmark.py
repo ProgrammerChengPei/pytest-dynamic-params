@@ -6,7 +6,7 @@ import time
 
 import pytest
 
-from dynamic_params import dynamic_params, param_generator
+from dynamic_params import generator, use_generators
 
 
 class TestPerformanceBenchmark:
@@ -15,11 +15,11 @@ class TestPerformanceBenchmark:
     def test_baseline_performance(self):
         """基线性能测试 - 最简单场景"""
 
-        @param_generator
+        @generator
         def simple_return(x):
             return x
 
-        @dynamic_params(result=simple_return)
+        @use_generators(result=simple_return)
         @pytest.mark.parametrize("x", [1, 2, 3])
         def test_simple_case(x, result):
             assert result == x
@@ -41,11 +41,11 @@ class TestPerformanceBenchmark:
 
         for param_size in [10, 50, 100]:  # 不同参数数量
 
-            @param_generator
+            @generator
             def identity_func(x):
                 return x
 
-            @dynamic_params(output=identity_func)
+            @use_generators(output=identity_func)
             @pytest.mark.parametrize("x", list(range(param_size)))
             def test_scaling(x, output):
                 assert output == x
@@ -71,12 +71,12 @@ class TestPerformanceBenchmark:
         """测试生成器复杂度对性能的影响"""
 
         # 简单生成器
-        @param_generator
+        @generator
         def simple_gen(x):
             return x + 1
 
         # 中等复杂度生成器
-        @param_generator
+        @generator
         def medium_gen(x):
             result = 0
             for i in range(x % 10 + 1):
@@ -84,7 +84,7 @@ class TestPerformanceBenchmark:
             return result
 
         # 高复杂度生成器
-        @param_generator
+        @generator
         def complex_gen(x):
             result = []
             # 增加计算量，确保复杂度高于中等生成器
@@ -98,7 +98,7 @@ class TestPerformanceBenchmark:
             return result
 
         # 测试简单生成器性能
-        @dynamic_params(output=simple_gen)
+        @use_generators(output=simple_gen)
         @pytest.mark.parametrize("x", list(range(20)))
         def test_simple_gen_perf(x, output):
             assert output == x + 1
@@ -109,7 +109,7 @@ class TestPerformanceBenchmark:
         simple_time = time.perf_counter() - start_time
 
         # 测试中等复杂度生成器性能
-        @dynamic_params(output=medium_gen)
+        @use_generators(output=medium_gen)
         @pytest.mark.parametrize("x", list(range(20)))
         def test_medium_gen_perf(x, output):
             expected = sum(i * 2 for i in range(x % 10 + 1))
@@ -121,7 +121,7 @@ class TestPerformanceBenchmark:
         medium_time = time.perf_counter() - start_time
 
         # 测试高复杂度生成器性能
-        @dynamic_params(output=complex_gen)
+        @use_generators(output=complex_gen)
         @pytest.mark.parametrize("x", list(range(10)))  # 减少数量以避免过长时间
         def test_complex_gen_perf(x, output):
             expected = []
@@ -155,16 +155,16 @@ class TestPerformanceBenchmark:
         """测量缓存机制的有效性"""
 
         # 注意：缓存功能可能在插件的其他部分实现，这里我们只测试基本功能
-        @param_generator(cache=True)
+        @generator(cache=True)
         def gen_with_cache(x):
             return x * 2
 
-        @param_generator(cache=False)
+        @generator(cache=False)
         def gen_without_cache(x):
             return x * 2
 
         # 测试带缓存的版本
-        @dynamic_params(result=gen_with_cache)
+        @use_generators(result=gen_with_cache)
         @pytest.mark.parametrize("x", [1, 2, 1, 3, 2, 1])  # 有重复值
         def test_with_cache(x, result):
             assert result == x * 2
@@ -175,7 +175,7 @@ class TestPerformanceBenchmark:
         with_cache_time = time.perf_counter() - start_time
 
         # 测试不带缓存的版本
-        @dynamic_params(result=gen_without_cache)
+        @use_generators(result=gen_without_cache)
         @pytest.mark.parametrize("x", [1, 2, 1, 3, 2, 1])  # 相同的重复值
         def test_without_cache(x, result):
             assert result == x * 2
@@ -201,19 +201,19 @@ class TestPerformanceBenchmark:
         """测试依赖链的性能"""
 
         # 创建一个依赖链: gen_a -> gen_b -> gen_c
-        @param_generator
+        @generator
         def gen_a(x):
             return x + 1
 
-        @param_generator
+        @generator
         def gen_b(a_result):
             return a_result * 2
 
-        @param_generator
+        @generator
         def gen_c(b_result):
             return b_result - 1
 
-        @dynamic_params(a_result=gen_a, b_result=gen_b, c_result=gen_c)
+        @use_generators(a_result=gen_a, b_result=gen_b, c_result=gen_c)
         @pytest.mark.parametrize("x", list(range(30)))
         def test_deps(x, a_result, b_result, c_result):
             assert a_result == x + 1

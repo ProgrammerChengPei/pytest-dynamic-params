@@ -4,7 +4,7 @@
 
 import random
 
-from dynamic_params import dynamic_params, param_generator
+from dynamic_params import generator, use_generators
 from tests.utils import (
     measure_execution_time,
     run_with_gc,
@@ -26,11 +26,11 @@ class TestPerformanceMetrics:
 
         for scope in scopes:
 
-            @param_generator(scope=scope)
+            @generator(scope=scope)
             def generate_value(x):
                 return x * 2
 
-            @dynamic_params(value=generate_value)
+            @use_generators(value=generate_value)
             def test_func(x, value):
                 assert value == x * 2
 
@@ -50,7 +50,7 @@ class TestPerformanceMetrics:
         """测试懒加载与非懒加载的性能对比"""
 
         # 测试懒加载模式
-        @param_generator(lazy=True)
+        @generator(lazy=True)
         def lazy_generator(x):
             # 模拟一些计算
             result = 0
@@ -59,7 +59,7 @@ class TestPerformanceMetrics:
             return result
 
         # 测试非懒加载模式
-        @param_generator(lazy=False)
+        @generator(lazy=False)
         def eager_generator(x):
             # 模拟一些计算
             result = 0
@@ -67,11 +67,11 @@ class TestPerformanceMetrics:
                 result += x * i
             return result
 
-        @dynamic_params(value=lazy_generator)
+        @use_generators(value=lazy_generator)
         def test_lazy_func(x, value):
             assert value == sum(x * i for i in range(100))
 
-        @dynamic_params(value=eager_generator)
+        @use_generators(value=eager_generator)
         def test_eager_func(x, value):
             assert value == sum(x * i for i in range(100))
 
@@ -99,27 +99,27 @@ class TestPerformanceMetrics:
         """测试复杂依赖链的性能"""
 
         # 创建深层依赖链
-        @param_generator
+        @generator
         def level1(x):
             return x + 1
 
-        @param_generator
+        @generator
         def level2(level1):
             return level1 * 2
 
-        @param_generator
+        @generator
         def level3(level2):
             return level2 + 3
 
-        @param_generator
+        @generator
         def level4(level3):
             return level3 * 4
 
-        @param_generator
+        @generator
         def level5(level4):
             return level4 + 5
 
-        @dynamic_params(
+        @use_generators(
             level1=level1, level2=level2, level3=level3, level4=level4, level5=level5
         )
         def test_complex_chain(x, level1, level2, level3, level4, level5):
@@ -144,11 +144,11 @@ class TestPerformanceMetrics:
     def test_long_running_stability(self):
         """测试长时间运行的稳定性"""
 
-        @param_generator(cache=True)
+        @generator(cache=True)
         def stable_generator(x):
             return x * 10
 
-        @dynamic_params(value=stable_generator)
+        @use_generators(value=stable_generator)
         def test_stable_func(x, value):
             assert value == x * 10
 
@@ -164,11 +164,11 @@ class TestPerformanceMetrics:
         """测试生成器初始化性能"""
 
         def create_and_test_generator():
-            @param_generator
+            @generator
             def test_generator(x):
                 return x + 1
 
-            @dynamic_params(value=test_generator)
+            @use_generators(value=test_generator)
             def test_func(x, value):
                 assert value == x + 1
 
@@ -186,13 +186,13 @@ class TestPerformanceMetrics:
     def test_parameter_validation_performance(self):
         """测试参数验证性能"""
 
-        @param_generator
+        @generator
         def generator_with_validation(x):
             if not isinstance(x, int):
                 raise ValueError("必须是整数")
             return x * 2
 
-        @dynamic_params(value=generator_with_validation)
+        @use_generators(value=generator_with_validation)
         def test_validation_func(x, value):
             assert value == x * 2
 
@@ -206,13 +206,13 @@ class TestPerformanceMetrics:
     def test_error_handling_performance(self):
         """测试错误处理性能"""
 
-        @param_generator
+        @generator
         def error_generator(x):
             if x == 0:
                 raise ValueError("不能为零")
             return 10 / x
 
-        @dynamic_params(value=error_generator)
+        @use_generators(value=error_generator)
         def test_error_func(x, value):
             if x == 0:
                 assert value is None

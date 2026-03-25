@@ -5,16 +5,16 @@
 
 import time
 
-from dynamic_params import dynamic_params, param_generator
+from dynamic_params import generator, use_generators
 
 
-@param_generator(scope="session", cache=True)
+@generator(scope="session", cache=True)
 def session_data():
     """生成会话级别的数据，在所有 worker 中共享"""
     return {"timestamp": time.time()}
 
 
-@param_generator(scope="function")
+@generator(scope="function")
 def function_data(session_data, worker_id):
     """生成函数级别的数据，每个 worker 独立生成"""
     return {
@@ -27,7 +27,7 @@ def function_data(session_data, worker_id):
 class TestXdistCompatibility:
     """测试与pytest-xdist兼容性的测试类"""
 
-    @dynamic_params(session_data=session_data, function_data=function_data)
+    @use_generators(session_data=session_data, function_data=function_data)
     def test_xdist_compatibility(self, session_data, function_data, worker_id):
         """测试与 pytest-xdist 的兼容性"""
         # 验证 session 数据在所有 worker 中相同

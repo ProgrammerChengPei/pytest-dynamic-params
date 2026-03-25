@@ -1,8 +1,7 @@
 """GeneratorRegistry类的单元测试"""
 
-from dynamic_params.core.registry import GeneratorRegistry
-from dynamic_params.decorators import _ParamGeneratorDecorator
-from dynamic_params.errors import InvalidGeneratorError
+from dynamic_params import GeneratorRegistry, InvalidGeneratorError
+from dynamic_params.public.decorators.generator import _GeneratorDecorator
 
 
 class TestGeneratorRegistry:
@@ -21,12 +20,12 @@ class TestGeneratorRegistry:
         registry = GeneratorRegistry.get_instance()
 
         # 初始时应该为空
-        assert not registry.is_registered("nonexistent_func")
+        assert not registry.is_registered_by_function_name("nonexistent_func")
 
     def test_register_and_check(self):
         """测试注册和检查功能"""
         # 创建一个用装饰器装饰的函数
-        decorator = _ParamGeneratorDecorator()
+        decorator = _GeneratorDecorator()
 
         def dummy_func():
             return "test"
@@ -39,11 +38,11 @@ class TestGeneratorRegistry:
         registry.register(decorated_func, "test_param")
 
         # 检查是否已注册
-        assert registry.is_generator_registered(decorated_func)
+        assert registry.is_registered_by_function_object(decorated_func)
 
     def test_is_registered_by_name(self):
         """测试按名称检查注册状态"""
-        decorator = _ParamGeneratorDecorator()
+        decorator = _GeneratorDecorator()
 
         def dummy_func():
             return "test"
@@ -56,11 +55,11 @@ class TestGeneratorRegistry:
         registry.register(decorated_func, "test_param")
 
         # 检查函数名是否已注册（不是参数名）
-        assert registry.is_registered("dummy_func")
+        assert registry.is_registered_by_function_name("dummy_func")
 
     def test_double_registration(self):
         """测试重复注册的行为"""
-        decorator = _ParamGeneratorDecorator()
+        decorator = _GeneratorDecorator()
 
         def dummy_func1():
             return "test1"
@@ -80,7 +79,7 @@ class TestGeneratorRegistry:
         registry.register(decorated_func2, "func_name")
 
         # 检查是否是新的函数
-        assert registry.is_generator_registered(decorated_func2)
+        assert registry.is_registered_by_function_object(decorated_func2)
 
     def test_get_instance_method(self):
         """测试get_instance方法"""
@@ -108,7 +107,7 @@ class TestGeneratorRegistry:
 
     def test_get_generator(self):
         """测试通过参数名获取生成器"""
-        decorator = _ParamGeneratorDecorator()
+        decorator = _GeneratorDecorator()
 
         def dummy_func():
             return "test"
@@ -123,7 +122,7 @@ class TestGeneratorRegistry:
         # 通过参数名获取生成器
         generator = registry.get_generator("test_param")
         assert generator is not None
-        assert generator.param_name == "test_param"
+        assert generator.name == "test_param"
 
     def test_get_generator_not_found(self):
         """测试获取不存在的生成器"""
@@ -135,7 +134,7 @@ class TestGeneratorRegistry:
 
     def test_get_all_generators(self):
         """测试获取所有生成器"""
-        decorator = _ParamGeneratorDecorator()
+        decorator = _GeneratorDecorator()
 
         def dummy_func1():
             return "test1"
@@ -158,7 +157,7 @@ class TestGeneratorRegistry:
 
     def test_clear_cache(self):
         """测试清除缓存功能"""
-        decorator = _ParamGeneratorDecorator()
+        decorator = _GeneratorDecorator()
 
         def dummy_func():
             return "test"
@@ -167,18 +166,52 @@ class TestGeneratorRegistry:
 
         registry = GeneratorRegistry.get_instance()
 
+        # 先清除缓存，确保测试环境干净
+        registry.clear_cache(scope="function")
+
         # 注册函数
         generator = registry.register(decorated_func, "test_param")
 
-        # 添加一些缓存项
-        generator._cache["test_key"] = "test_value"
-        assert len(generator._cache) == 1
+        # 获取作用域缓存并添加一些缓存项
+        scoped_cache = registry.get_scoped_cache("function")
+        scoped_cache["test_key"] = "test_value"
+        assert "test_key" in scoped_cache
 
         # 清除特定作用域的缓存
         registry.clear_cache(scope="function")
 
         # 检查缓存是否被清空
-        assert len(generator._cache) == 0
+        scoped_cache = registry.get_scoped_cache("function")
+        assert "test_key" not in scoped_cache
+
+    def test_clear_cache_all_scopes(self):
+        """测试清除所有作用域的缓存"""
+        decorator = _GeneratorDecorator()
+
+        def dummy_func():
+            return "test"
+
+        decorated_func = decorator(dummy_func)
+
+        registry = GeneratorRegistry.get_instance()
+
+        # 先清除所有缓存，确保测试环境干净
+        registry.clear_cache()
+
+        # 注册函数
+        generator = registry.register(decorated_func, "test_param")
+
+        # 获取作用域缓存并添加一些缓存项
+        scoped_cache = registry.get_scoped_cache("function")
+        scoped_cache["test_key"] = "test_value"
+        assert "test_key" in scoped_cache
+
+        # 清除所有作用域的缓存
+        registry.clear_cache()
+
+        # 检查缓存是否被清空
+        scoped_cache = registry.get_scoped_cache("function")
+        assert "test_key" not in scoped_cache
 
     def test_get_scoped_cache(self):
         """测试获取作用域缓存"""
@@ -224,7 +257,7 @@ class TestGeneratorRegistry:
             return a + b
 
         # 验证函数可以正常注册
-        decorator = _ParamGeneratorDecorator()
+        decorator = _GeneratorDecorator()
         decorated_no_args = decorator(no_args_func)
         decorated_with_args = decorator(with_args_func)
 
@@ -232,5 +265,158 @@ class TestGeneratorRegistry:
         registry.register(decorated_with_args, "with_args_param")
 
         # 验证注册成功
-        assert registry.is_registered("no_args_func")
-        assert registry.is_registered("with_args_func")
+        assert registry.is_registered_by_function_name("no_args_func")
+        assert registry.is_registered_by_function_name("with_args_func")
+
+    def test_is_registered_by_function_name_not_found(self):
+        """测试按名称检查注册状态（未找到）"""
+        registry = GeneratorRegistry.get_instance()
+        # 检查不存在的函数名
+        assert not registry.is_registered_by_function_name("nonexistent_func")
+
+    def test_is_registered_by_function_object_not_found(self):
+        """测试按函数对象检查注册状态（未找到）"""
+        registry = GeneratorRegistry.get_instance()
+        # 创建一个未注册的函数
+        def unregistered_func():
+            return "test"
+        # 检查未注册的函数对象
+        assert not registry.is_registered_by_function_object(unregistered_func)
+
+    def test_clear_cache_invalid_scope(self):
+        """测试清除无效作用域的缓存"""
+        registry = GeneratorRegistry.get_instance()
+        # 尝试清除无效作用域的缓存，应该不会抛出异常
+        registry.clear_cache(scope="invalid_scope")
+
+    def test_set_scoped_cache_invalid_scope(self):
+        """测试设置无效作用域的缓存"""
+        registry = GeneratorRegistry.get_instance()
+        # 尝试设置无效作用域的缓存，应该不会抛出异常
+        registry.set_scoped_cache("invalid_scope", {"test_key": "test_value"})
+
+    def test_register_with_wrapped_function(self):
+        """测试注册包装函数"""
+        # 创建一个装饰器
+        def wrapper(func):
+            def inner(*args, **kwargs):
+                return func(*args, **kwargs)
+            inner.__wrapped__ = func
+            return inner
+
+        # 创建并装饰函数
+        decorator = _GeneratorDecorator()
+
+        # 先使用 _GeneratorDecorator 装饰，再使用 wrapper 装饰
+        @wrapper
+        @decorator
+        def wrapped_func():
+            return "test"
+
+        registry = GeneratorRegistry.get_instance()
+        # 注册包装函数
+        generator = registry.register(wrapped_func, "wrapped_param")
+        # 验证注册成功
+        assert generator is not None
+        assert registry.is_registered_by_function_object(wrapped_func)
+
+    def test_get_all_generators(self):
+        """测试获取所有已注册的生成器"""
+        # 保存原始单例实例
+        original_instance = GeneratorRegistry._instance
+
+        try:
+            # 清除单例实例
+            GeneratorRegistry._instance = None
+            # 创建注册表实例
+            registry = GeneratorRegistry.get_instance()
+            # 验证初始状态下没有生成器
+            generators = registry.get_all_generators()
+            assert isinstance(generators, list)
+            assert len(generators) == 0
+
+            # 创建并注册一个生成器
+            decorator = _GeneratorDecorator()
+
+            @decorator
+            def test_func():
+                return "test"
+
+            registry.register(test_func, "test_param")
+            # 验证获取到了注册的生成器
+            generators = registry.get_all_generators()
+            assert len(generators) == 1
+        finally:
+            # 恢复原始单例实例
+            GeneratorRegistry._instance = original_instance
+
+    def test_is_registered_by_function_name_not_found(self):
+        """测试通过函数名检查未注册的生成器"""
+        # 保存原始单例实例
+        original_instance = GeneratorRegistry._instance
+
+        try:
+            # 清除单例实例
+            GeneratorRegistry._instance = None
+            # 创建注册表实例
+            registry = GeneratorRegistry.get_instance()
+            # 验证未注册的函数名返回 False
+            assert not registry.is_registered_by_function_name("nonexistent_func")
+        finally:
+            # 恢复原始单例实例
+            GeneratorRegistry._instance = original_instance
+
+    def test_is_registered_by_function_object_not_found(self):
+        """测试通过函数对象检查未注册的生成器"""
+        # 保存原始单例实例
+        original_instance = GeneratorRegistry._instance
+
+        try:
+            # 清除单例实例
+            GeneratorRegistry._instance = None
+            # 创建注册表实例
+            registry = GeneratorRegistry.get_instance()
+            # 定义一个未注册的函数
+            def unregistered_func():
+                return "test"
+            # 验证未注册的函数对象返回 False
+            assert not registry.is_registered_by_function_object(unregistered_func)
+        finally:
+            # 恢复原始单例实例
+            GeneratorRegistry._instance = original_instance
+
+    def test_clear_cache_invalid_scope(self):
+        """测试清理无效作用域的缓存"""
+        # 保存原始单例实例
+        original_instance = GeneratorRegistry._instance
+
+        try:
+            # 清除单例实例
+            GeneratorRegistry._instance = None
+            # 创建注册表实例
+            registry = GeneratorRegistry.get_instance()
+            # 尝试清理无效作用域的缓存（应该不会抛出异常）
+            registry.clear_cache("invalid_scope")
+            # 验证操作完成，没有抛出异常
+            assert True
+        finally:
+            # 恢复原始单例实例
+            GeneratorRegistry._instance = original_instance
+
+    def test_set_scoped_cache_invalid_scope(self):
+        """测试设置无效作用域的缓存"""
+        # 保存原始单例实例
+        original_instance = GeneratorRegistry._instance
+
+        try:
+            # 清除单例实例
+            GeneratorRegistry._instance = None
+            # 创建注册表实例
+            registry = GeneratorRegistry.get_instance()
+            # 尝试设置无效作用域的缓存（应该不会抛出异常）
+            registry.set_scoped_cache("invalid_scope", {})
+            # 验证操作完成，没有抛出异常
+            assert True
+        finally:
+            # 恢复原始单例实例
+            GeneratorRegistry._instance = original_instance
