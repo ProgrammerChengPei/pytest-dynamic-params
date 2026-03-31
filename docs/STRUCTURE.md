@@ -1,114 +1,178 @@
-# pytest-dynamic-params 文件结构
+# pytest-dynamic-params 项目结构说明
 
-本文档详细说明了 `pytest-dynamic-params` 插件的内部架构和模块设计。
+本文档说明项目的文件组织和目录结构，帮助开发者和用户快速定位文件。
 
-## 项目目录结构
+## 📁 项目目录总览
 
 ```
-├── src/                  # 源代码
-│   └── dynamic_params/   # 主要源代码
-│       ├── engine/        # 内部引擎
-│       │   ├── __init__.py      # 引擎导出
-│       │   ├── config.py        # 配置管理
-│       │   ├── dependency.py    # 依赖解析
-│       │   └── registry.py      # 生成器注册表
-│       ├── plugin/        # 插件实现
-│       │   ├── __init__.py          # 插件导出
-│       │   ├── pytest_plugin.py     # 核心插件逻辑
-│       │   ├── processors/          # 装饰器处理器
-│       │   │   ├── __init__.py      # 处理器导出
-│       │   │   ├── use_generators.py # @use_generators 处理器
-│       │   │   └── dynamic_parametrize.py # @dynamic_parametrize 处理器
-│       │   └── utils.py             # 插件工具函数
-│       ├── public/        # 公共 API
-│       │   ├── __init__.py          # API 导出
-│       │   ├── decorators/          # 装饰器
-│       │   │   ├── __init__.py      # 装饰器导出
-│       │   │   ├── generator.py     # @generator 装饰器
-│       │   │   ├── use_generators.py # @use_generators 装饰器
-│       │   │   └── dynamic_parametrize.py # @dynamic_parametrize 装饰器
-│       │   └── generators/          # 生成器核心类
-│       │       ├── __init__.py      # 生成器导出
-│       │       ├── generator.py     # Generator 类
-│       │       └── lazy.py          # 懒加载相关
-│       ├── utils/         # 通用工具
-│       │   ├── __init__.py          # 工具导出
-│       │   └── helpers.py           # 辅助函数
-│       ├── __init__.py           # 包入口点和公共接口
-│       ├── errors.py             # 错误类定义
-│       ├── py.typed              # 类型提示标记文件
-│       └── types.py              # 类型定义
-├── tests/                # 测试代码
-│   ├── fixtures/         # 测试夹具
-│   ├── functional/       # 功能测试
-│   ├── generators/       # 测试生成器
-│   ├── integration/      # 集成测试
-│   ├── performance/      # 性能测试
-│   ├── unit/             # 单元测试
-│   ├── utils/            # 测试工具
-│   └── conftest.py       # 测试配置文件
-├── examples/             # 使用示例
-├── docs/                 # 文档
-├── specs/                # 项目规格说明
+pytest-dynamic-params/
+├── src/dynamic_params/          # 源代码
+├── tests/                       # 测试代码
+├── docs/                        # 文档
+├── specs/                       # 规格说明
+├── examples/                    # 使用示例
+├── README.md                    # 快速入门
+├── CONTRIBUTING.md              # 贡献指南
 └── ...
 ```
 
-## 核心模块详解
+## 📂 详细目录结构
 
-### 1. `src/dynamic_params/public/generators/generator.py` - 生成器核心实现
-- `Generator`: 生成器核心类，负责执行参数生成逻辑、缓存和依赖管理
-- 实现了参数生成的生命周期管理
-- 支持多种作用域（function/class/module/session）
-- 支持缓存和懒加载功能
+### 源代码目录 (`src/dynamic_params/`)
 
-### 2. `src/dynamic_params/engine/registry.py` - 生成器注册表
-- `GeneratorRegistry`: 单例模式的生成器注册表，管理所有已注册的参数生成器
-- 负责生成器的注册、查找和生命周期管理
-- 提供按作用域管理的缓存机制
+```
+src/dynamic_params/
+├── __init__.py                  # 包入口，导出公共 API
+├── types.py                     # 类型定义
+├── errors.py                    # 异常类定义
+├── py.typed                     # PEP 561 类型提示标记
+│
+├── public/                      # 公共 API（用户直接使用）
+│   ├── __init__.py
+│   ├── decorators/              # 装饰器
+│   │   ├── param_generator.py         # @param_generator
+│   │   ├── parametrize_test.py        # @parametrize_test
+│   │   ├── parametrize_fixture.py     # @parametrize_fixture
+│   │   └── parametrize_generator.py   # @parametrize_generator
+│   ├── generators/              # 生成器核心类
+│   │   ├── base.py                    # GeneratorBase 类
+│   │   ├── sync_manager.py            # SyncManager 同步管理器
+│   │   └── worker_pool.py             # WorkerPool 连接池
+│   └── dynref.py                # DynRef 动态引用类
+│
+├── engine/                      # 内部引擎（不直接暴露给用户）
+│   ├── __init__.py
+│   ├── config.py                # 配置管理
+│   ├── dependency.py            # 依赖解析
+│   └── registry.py              # 生成器注册表
+│
+└── plugin/                      # pytest 插件实现
+    ├── __init__.py
+    ├── pytest_plugin.py         # 核心插件逻辑
+    └── utils.py                 # 插件工具函数
+```
 
-### 3. `src/dynamic_params/public/decorators/` - 装饰器系统
-- `generator`: 参数生成器装饰器，用于标记参数生成函数
-  - 支持作用域配置（scope参数）
-  - 支持缓存配置（cache参数）
-  - 支持懒加载配置（lazy参数）
-- `use_generators`: 动态参数装饰器，用于关联测试函数和参数生成器
-  - 验证参数映射的有效性
-  - 确保生成器已被正确装饰
-- `dynamic_parametrize`: 动态参数化装饰器，支持在参数化中使用DynRef引用
+### 测试目录 (`tests/`)
 
-### 4. `src/dynamic_params/errors.py` - 异常体系
-- `DynamicParamError`: 基础异常类
-- `MissingParameterError`: 缺失参数异常，当依赖的参数在测试环境中不可用时抛出
-- `InvalidGeneratorError`: 无效生成器异常，当函数未使用@generator装饰器标记时抛出
-- `CircularDependencyError`: 循环依赖异常，当检测到参数生成器之间存在循环依赖时抛出
-- `ExecutionError`: 执行异常，当生成器函数执行失败时抛出
-- `ConfigurationError`: 配置异常，当配置无效时抛出
+```
+tests/
+├── conftest.py                  # pytest 配置和共享 fixture
+├── unit/                        # 单元测试
+│   ├── test_decorators.py       # 测试装饰器
+│   ├── test_generators.py       # 测试生成器
+│   └── test_dynref.py           # 测试 DynRef
+│
+├── functional/                  # 功能测试
+│   ├── test_basic_functionality.py  # 基础功能
+│   ├── test_fixture_integration.py  # fixture 集成
+│   └── test_parametrize.py      # 参数化测试
+│
+├── integration/                 # 集成测试
+│   ├── test_generator_integration.py  # 生成器集成
+│   └── test_cache_lazy_integration.py # 缓存和懒加载集成
+│
+├── performance/                 # 性能测试
+│   ├── test_caching_performance.py    # 缓存性能
+│   └── test_lazy_loading_performance.py # 懒加载性能
+│
+└── sync_tests/                  # 同步机制测试
+    └── test_sync_integration.py # 并行测试同步集成测试
+```
 
-### 5. `src/dynamic_params/public/generators/lazy.py` - 懒加载机制
-- `LazyResult`: 懒加载结果包装器，推迟参数生成直到实际需要
-- `generate_lazy_combinations`: 生成懒加载参数组合的函数
-- 提高性能，避免不必要的参数生成
+### 文档目录 (`docs/`)
 
-### 6. `src/dynamic_params/plugin/pytest_plugin.py` - pytest插件实现
-- `pytest_configure`: pytest配置钩子，注册插件标记
-- `pytest_generate_tests`: 生成测试参数钩子，处理动态参数生成
+```
+docs/
+├── usage-guide.md               # 用户使用指南（详细教程）
+├── STRUCTURE.md                 # 本文件（项目结构说明）
+├── comparison.md                # 与 pytest.mark.parametrize 对比
+└── reports-*.md                 # 历史测试报告
+```
 
-### 7. `src/dynamic_params/engine/dependency.py` - 依赖解析引擎
-- `resolve_dependency_order`: 解析生成器间的依赖关系并按拓扑排序
-- 实现了基于Kahn算法的拓扑排序
-- 检测循环依赖并提供详细的错误信息
+### 规格目录 (`specs/`)
 
-### 8. `src/dynamic_params/engine/config.py` - 配置管理系统
-- `DynamicParamConfig`: 动态参数配置类
-- 管理缓存、作用域等配置选项
-- 支持多种配置源（命令行、配置文件、环境变量）
+```
+specs/
+├── 需求.md                      # 需求规格文档
+├── 架构设计.md                  # 架构设计（技术决策、组件职责）
+├── 详细设计.md                  # 详细设计（实现细节、算法）
+└── 待办.md                      # 待办事项
+```
 
-### 9. `src/dynamic_params/utils/helpers.py` - 通用工具函数
-- 提供参数处理、类型检查等通用功能
-- 包含辅助函数以简化开发
-- 提供函数签名提取、参数名验证等功能
+## 📄 根目录文件说明
 
-### 10. `src/dynamic_params/types.py` - 类型定义
-- 定义项目中使用的类型提示
-- 提高代码的可读性和类型安全性
+| 文件 | 用途 | 目标读者 |
+|------|------|---------|
+| `README.md` | 快速入门指南 | 新用户 |
+| `CONTRIBUTING.md` | 贡献指南 | 贡献者 |
 
+## 🔍 快速定位
+
+### 查找装饰器实现
+
+```
+@param_generator       → src/dynamic_params/public/decorators/param_generator.py
+@parametrize_test      → src/dynamic_params/public/decorators/parametrize_test.py
+@parametrize_fixture   → src/dynamic_params/public/decorators/parametrize_fixture.py
+@parametrize_generator → src/dynamic_params/public/decorators/parametrize_generator.py
+```
+
+### 查找核心类
+
+```
+GeneratorBase    → src/dynamic_params/public/generators/base.py
+SyncManager      → src/dynamic_params/public/generators/sync_manager.py
+WorkerPool       → src/dynamic_params/public/generators/worker_pool.py
+DynRef           → src/dynamic_params/public/dynref.py
+```
+
+### 查找引擎组件
+
+```
+配置管理    → src/dynamic_params/engine/config.py
+依赖解析    → src/dynamic_params/engine/dependency.py
+注册表      → src/dynamic_params/engine/registry.py
+```
+
+### 查找测试
+
+```
+单元测试      → tests/unit/
+功能测试      → tests/functional/
+集成测试      → tests/integration/
+性能测试      → tests/performance/
+同步测试      → tests/sync_tests/
+```
+
+## 📚 文档导航
+
+### 用户文档
+
+- **快速入门** → [README.md](../README.md)
+- **详细使用指南** → [docs/usage-guide.md](usage-guide.md)
+- **功能对比** → [docs/comparison.md](comparison.md)
+
+### 开发文档
+
+- **贡献指南** → [CONTRIBUTING.md](../CONTRIBUTING.md)
+- **项目结构** → 本文件
+- **需求** → [specs/需求.md](../specs/需求.md)
+- **架构设计** → [specs/架构设计.md](../specs/架构设计.md)
+- **详细设计** → [specs/详细设计.md](../specs/详细设计.md)
+
+## 🏗️ 架构 vs 结构
+
+**本文档与架构设计文档的区别**：
+
+- **STRUCTURE.md（本文档）**：说明**文件在哪里**，帮助快速定位
+- **specs/架构设计.md**：说明**为什么这样设计**，包含技术决策、组件职责、数据流等
+
+**推荐阅读顺序**：
+
+1. 新用户：README.md → usage-guide.md
+2. 贡献者：CONTRIBUTING.md → STRUCTURE.md → 架构设计.md
+3. 深度开发：架构设计.md → 详细设计.md → 源代码
+
+---
+
+**最后更新**: 2026-03-31

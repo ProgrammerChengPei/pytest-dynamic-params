@@ -384,3 +384,76 @@ def test_conditional_parameter_generation(input_value, conditional_params):
         assert conditional_params["sqrt"] == input_value**0.5
 
     assert "description" in conditional_params
+
+
+# 示例7：动态参数化 - 使用dynamic_parametrize装饰器
+from dynamic_params import dynamic_parametrize, DynRef
+
+
+@pytest.fixture
+def base_value():
+    """基础值fixture
+
+    提供一个基础值用于动态参数计算
+    """
+    return 10
+
+
+# 测试装饰器是否被正确应用
+def test_decorator_application():
+    """测试dynamic_parametrize装饰器是否被正确应用"""
+    @dynamic_parametrize(
+        "input_value",
+        [1, 2, 3]
+    )
+    def test_func(input_value):
+        pass
+    
+    print(f"test_func._is_parametrized={getattr(test_func, '_is_parametrized', 'N/A')}")
+    print(f"test_func._parametrize_info={getattr(test_func, '_parametrize_info', 'N/A')}")
+    assert hasattr(test_func, '_is_parametrized'), "装饰器未设置_is_parametrized属性"
+    assert test_func._is_parametrized, "_is_parametrized属性为False"
+    assert hasattr(test_func, '_parametrize_info'), "装饰器未设置_parametrize_info属性"
+
+
+# 测试dynamic_parametrize装饰器的基本功能
+@dynamic_parametrize(
+    "input_value",
+    [1, 2, 3]
+)
+def test_dynamic_parametrize_basic_functionality(input_value):
+    """测试dynamic_parametrize装饰器的基本功能"""
+    assert input_value in [1, 2, 3]
+
+
+@dynamic_parametrize(
+    "input_value, expected_result",
+    [
+        (1, 1),
+        (2, 2),
+        (3, 3)
+    ]
+)
+def test_dynamic_parametrize_basic(input_value, expected_result):
+    """测试基础dynamic_parametrize功能
+
+    验证dynamic_parametrize装饰器能否正确处理参数
+    """
+    assert input_value == expected_result
+
+
+@dynamic_parametrize(
+    "x, y",
+    [
+        (1, 2),
+        (3, 5),
+        (2, 4)
+    ]
+)
+def test_dynamic_parametrize_with_calculations(x, y):
+    """测试带计算的dynamic_parametrize功能
+
+    验证dynamic_parametrize装饰器能否正确处理参数
+    """
+    assert isinstance(x, (int, float))
+    assert isinstance(y, (int, float))

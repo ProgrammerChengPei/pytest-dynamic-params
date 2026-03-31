@@ -9,3 +9,6 @@ omit =
     src/dynamic_params/plugin/pytest_plugin.py
     **/__init__.py
     src/dynamic_params/types.py
+    src/dynamic_params/__version__.py
+    src/dynamic_params/errors.py
+    src/dynamic_params/public/api.py

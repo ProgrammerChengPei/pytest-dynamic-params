@@ -1,107 +1,70 @@
-"""
-测试插件工具函数的单元测试
-"""
+# Test plugin utils functionality
 
-from dynamic_params import dynamic_parametrize, generator, use_generators
-from dynamic_params.plugin.utils import PluginUtils
+import pytest
+from dynamic_params.plugin.utils import get_plugin_config, is_xdist_enabled
 
 
-class TestPluginUtils:
-    """PluginUtils类的测试类"""
+class MockConfig:
+    """Mock Config class for testing"""
+    
+    def __init__(self, config_dict=None):
+        self.config_dict = config_dict or {}
+    
+    def getini(self, key):
+        return self.config_dict.get(key)
 
-    def test_extract_dynamic_params(self):
-        """测试提取动态参数映射"""
-        # 测试没有动态参数的函数
-        def test_func():
-            pass
-        
-        result = PluginUtils.extract_dynamic_params(test_func)
-        assert result == {}
-        
-        # 测试有动态参数的函数
-        @generator
-        def test_generator():
-            return 42
-        
-        @use_generators(result=test_generator)
-        def test_func_with_params():
-            pass
-        
-        result = PluginUtils.extract_dynamic_params(test_func_with_params)
-        assert "result" in result
 
-    def test_is_dynamic_parametrized(self):
-        """测试检查函数是否使用了 @dynamic_parametrize 装饰器"""
-        # 测试没有使用 @dynamic_parametrize 的函数
-        def test_func():
-            pass
+class TestGetPluginConfig:
+    """Test get_plugin_config function"""
+    
+    def test_get_plugin_config_default(self):
+        """Test get_plugin_config with default values"""
+        config = MockConfig()
+        result = get_plugin_config(config)
         
-        result = PluginUtils.is_dynamic_parametrized(test_func)
+        assert result["default_cache"] is False
+        assert result["default_lazy"] is False
+        assert result["default_scope"] == "function"
+    
+    def test_get_plugin_config_with_values(self):
+        """Test get_plugin_config with custom values"""
+        config = MockConfig({
+            "dynamic_params_default_cache": "true",
+            "dynamic_params_default_lazy": "true",
+            "dynamic_params_default_scope": "session"
+        })
+        result = get_plugin_config(config)
+        
+        assert result["default_cache"] is True
+        assert result["default_lazy"] is True
+        assert result["default_scope"] == "session"
+    
+    def test_get_plugin_config_partial_values(self):
+        """Test get_plugin_config with partial values"""
+        config = MockConfig({
+            "dynamic_params_default_cache": "true"
+        })
+        result = get_plugin_config(config)
+        
+        assert result["default_cache"] is True
+        assert result["default_lazy"] is False
+        assert result["default_scope"] == "function"
+
+
+class TestIsXdistEnabled:
+    """Test is_xdist_enabled function"""
+    
+    def test_is_xdist_enabled_false(self):
+        """Test is_xdist_enabled with no xdist"""
+        config = MockConfig()
+        result = is_xdist_enabled(config)
+        
         assert result is False
+    
+    def test_is_xdist_enabled_true(self):
+        """Test is_xdist_enabled with xdist"""
+        config = MockConfig()
+        config.workerinput = {}
+        result = is_xdist_enabled(config)
         
-        # 测试使用了 @dynamic_parametrize 的函数
-        @dynamic_parametrize("param", [1, 2, 3])
-        def test_func_with_parametrize(param):
-            pass
-        
-        result = PluginUtils.is_dynamic_parametrized(test_func_with_parametrize)
         assert result is True
-
-    def test_is_use_generators(self):
-        """测试检查函数是否使用了 @use_generators 装饰器"""
-        # 测试没有使用 @use_generators 的函数
-        def test_func():
-            pass
-        
-        result = PluginUtils.is_use_generators(test_func)
-        assert result is False
-        
-        # 测试使用了 @use_generators 的函数
-        @generator
-        def test_generator():
-            return 42
-        
-        @use_generators(result=test_generator)
-        def test_func_with_generators():
-            pass
-        
-        result = PluginUtils.is_use_generators(test_func_with_generators)
-        assert result is True
-
-    def test_get_parametrize_info(self):
-        """测试获取函数的参数化信息"""
-        # 测试没有参数化信息的函数
-        def test_func():
-            pass
-        
-        result = PluginUtils.get_parametrize_info(test_func)
-        assert result == []
-        
-        # 测试有参数化信息的函数
-        @dynamic_parametrize("param", [1, 2, 3])
-        def test_func_with_parametrize(param):
-            pass
-        
-        result = PluginUtils.get_parametrize_info(test_func_with_parametrize)
-        assert len(result) > 0
-
-    def test_get_generator_mapping(self):
-        """测试获取函数的生成器映射"""
-        # 测试没有生成器映射的函数
-        def test_func():
-            pass
-        
-        result = PluginUtils.get_generator_mapping(test_func)
-        assert result == {}
-        
-        # 测试有生成器映射的函数
-        @generator
-        def test_generator():
-            return 42
-        
-        @use_generators(result=test_generator)
-        def test_func_with_generators():
-            pass
-        
-        result = PluginUtils.get_generator_mapping(test_func_with_generators)
-        assert "result" in result

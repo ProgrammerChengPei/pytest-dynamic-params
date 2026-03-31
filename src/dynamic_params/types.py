@@ -1,59 +1,36 @@
-"""类型定义模块"""
+# Type definitions for pytest-dynamic-params
 
 from typing import (
-    TYPE_CHECKING,
     Any,
     Callable,
     Dict,
     List,
-    Literal,
+    Optional,
     TypeVar,
+    Union,
+    Generator as GeneratorType,
 )
 
-# 类型变量
-T = TypeVar("T")
+# Type variables
+T = TypeVar('T')
 
-# 生成器函数类型
-GeneratorFunction = Callable[..., Any]
+# Generator function type
+GeneratorFunc = Callable[..., Union[List[Any], GeneratorType[Any, None, None]]]
 
-# 上下文类型
-Context = Dict[str, Any]
+# Parameter value type
+ParamValue = Union[Any, 'DynRef']
 
-# 生成器映射类型
-GeneratorMapping = Dict[str, GeneratorFunction]
+# Parameter values type
+ParamValues = List[List[ParamValue]]
 
-# 作用域类型
-ScopeType = Literal["function", "class", "module", "session"]
+# Parametrization configuration type
+ParametrizationConfig = Dict[str, Any]
 
-# 参数化信息类型
-ParametrizeInfo = Dict[str, Any]
+# Dependency graph type
+DependencyGraphType = Dict[str, Dict[str, List[str]]]
 
-# 生成器注册表类型
-GeneratorRegistryType = "GeneratorRegistry"
+# Cache type
+CacheType = Dict[str, Dict[str, Any]]
 
-# 生成器类型
-if TYPE_CHECKING:
-    from .public.generators.generator import Generator
-
-GeneratorType = "Generator"
-
-# 懒加载结果类型
-LazyResultType = "LazyResult"
-
-# 装饰器参数类型
-DecoratorArgs = Dict[str, Any]
-
-# 配置类型
-ConfigDict = Dict[str, Dict[str, Any]]
-
-# 依赖顺序类型
-DependencyOrder = List["Generator"]
-
-# 缓存键类型
-CacheKey = str
-
-# 作用域缓存类型
-ScopedCache = Dict[CacheKey, Any]
-
-# 作用域缓存映射类型
-ScopedCacheMap = Dict[ScopeType, ScopedCache]
+# Context type
+ContextType = Dict[str, Any]

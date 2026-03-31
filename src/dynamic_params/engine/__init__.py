@@ -1,11 +1,17 @@
 """引擎模块初始化文件"""
 
-from .config import DynamicParamConfig
-from .dependency import resolve_dependency_order
-from .registry import GeneratorRegistry
+from .dependency import DynRef, DependencyGraph, DependencyResolver
+from .generator import GeneratorBase, GeneratorRegistry, GeneratorCache, LazyGenerator
+from .parametrize import ParametrizeProcessor, ParametrizeCombinator
 
 __all__ = [
+    "DynRef",
+    "DependencyGraph",
+    "DependencyResolver",
+    "GeneratorBase",
     "GeneratorRegistry",
-    "resolve_dependency_order",
-    "DynamicParamConfig",
+    "GeneratorCache",
+    "LazyGenerator",
+    "ParametrizeProcessor",
+    "ParametrizeCombinator",
 ]

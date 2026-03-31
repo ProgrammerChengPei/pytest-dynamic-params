@@ -1,153 +1,37 @@
-"""错误处理模块"""
+# Error definitions for pytest-dynamic-params
 
-from typing import Any, Dict, List
-
-
-class DynamicParamError(Exception):
-    """动态参数系统基础异常"""
-
+class DynamicParamsError(Exception):
+    """Base exception class for dynamic params plugin"""
     pass
 
+class DependencyError(DynamicParamsError):
+    """Error related to dependency resolution"""
+    pass
 
-class MissingParameterError(DynamicParamError):
-    """缺失参数异常"""
+class CircularDependencyError(DependencyError):
+    """Error raised when a circular dependency is detected"""
+    pass
 
-    def __init__(
-        self,
-        param_name: str,
-        generator_name: str,
-        required_params: List[str],
-        available_params: List[str],
-    ):
-        self.param_name = param_name
-        self.generator_name = generator_name
-        self.required_params = required_params
-        self.available_params = available_params
+class GeneratorError(DynamicParamsError):
+    """Error related to parameter generators"""
+    pass
 
-        message = self._get_message(
-            param_name,
-            generator_name,
-            required_params,
-            available_params
-        )
-        super().__init__(message)
+class GeneratorNotFoundError(GeneratorError):
+    """Error raised when a generator is not found"""
+    pass
 
-    def _get_message(
-        self,
-        param_name: str,
-        generator_name: str,
-        required_params: List[str],
-        available_params: List[str]
-    ) -> str:
-        """生成错误消息"""
-        return (
-            f"参数 '{param_name}' 在生成器函数 '{generator_name}' 中需要，但未在测试用例中找到。\n"
-            f"生成器函数需要的参数: {required_params}\n"
-            f"测试用例可用参数: {available_params}"
-        )
+class ParametrizeError(DynamicParamsError):
+    """Error related to parameterization"""
+    pass
 
+class DynRefError(DynamicParamsError):
+    """Error related to DynRef usage"""
+    pass
 
-class InvalidGeneratorError(DynamicParamError):
-    """无效生成器异常"""
+class ConfigError(DynamicParamsError):
+    """Error related to configuration"""
+    pass
 
-    def __init__(self, message: str):
-        self.message = message
-        super().__init__(self._get_message(message))
-
-    def _get_message(self, message: str) -> str:
-        """生成错误消息"""
-        return message
-
-
-class CircularDependencyError(DynamicParamError):
-    """循环依赖异常"""
-
-    def __init__(self, cycle: List[str]):
-        self.cycle = cycle
-        message = self._get_message(cycle)
-        super().__init__(message)
-
-    def _get_message(self, cycle: List[str]) -> str:
-        """生成错误消息"""
-        if cycle:
-            cycle_str = " -> ".join(cycle)
-            return (
-                f"检测到循环依赖:\n\n"
-                f"依赖链: {cycle_str} -> {cycle[0]}\n\n"
-                f"请修改生成器函数的依赖关系以消除循环。"
-            )
-        else:
-            return (
-                "检测到循环依赖:\n\n"
-                "依赖链: 空循环\n\n"
-                "请修改生成器函数的依赖关系以消除循环。"
-            )
-
-
-class ExecutionError(DynamicParamError):
-    """生成器执行异常"""
-
-    def __init__(
-        self,
-        generator_name: str,
-        exception: Exception,
-        context: Dict[str, Any]
-    ):
-        self.generator_name = generator_name
-        self.exception = exception
-        self.context = context
-
-        message = self._get_message(
-            generator_name,
-            exception,
-            context
-        )
-        super().__init__(message)
-
-    def _get_message(
-        self,
-        generator_name: str,
-        exception: Exception,
-        context: Dict[str, Any]
-    ) -> str:
-        """生成错误消息"""
-        return (
-            f"参数生成器 '{generator_name}' 执行失败:\n\n"
-            f"异常类型: {type(exception).__name__}\n"
-            f"异常信息: {str(exception)}\n"
-            f"调用上下文: {context}\n"
-        )
-
-
-class ConfigurationError(DynamicParamError):
-    """配置错误异常"""
-
-    def __init__(
-        self,
-        config_key: str,
-        config_value: Any,
-        expected_type: type
-    ):
-        self.config_key = config_key
-        self.config_value = config_value
-        self.expected_type = expected_type
-
-        message = self._get_message(
-            config_key,
-            config_value,
-            expected_type
-        )
-        super().__init__(message)
-
-    def _get_message(
-        self,
-        config_key: str,
-        config_value: Any,
-        expected_type: type
-    ) -> str:
-        """生成错误消息"""
-        return (
-            f"配置项 '{config_key}' 无效:\n\n"
-            f"当前值: {config_value} (类型: {type(config_value).__name__})\n"
-            f"期望类型: {expected_type.__name__}"
-        )
+class ConfigurationError(ConfigError):
+    """Alias for ConfigError"""
+    pass

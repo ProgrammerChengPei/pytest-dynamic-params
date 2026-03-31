@@ -1,78 +1,116 @@
-"""工具函数模块的单元测试"""
+# Test utils functionality
 
-from dynamic_params import normalize_param_value, validate_param_name
-from dynamic_params.utils.helpers import get_function_signature
-
-
-class TestGetFunctionSignature:
-    """get_function_signature函数的测试类"""
-
-    def test_get_function_signature(self):
-        """测试获取函数签名"""
-
-        def sample_func(a, b, c=10):
-            return a + b + c
-
-        signature = get_function_signature(sample_func)
-
-        # 检查签名的字符串表示
-        signature_str = str(signature)
-        assert "(a, b, c=10)" in signature_str
-
-    def test_get_function_signature_no_params(self):
-        """测试无参函数的签名"""
-
-        def no_param_func():
-            return "no params"
-
-        signature = get_function_signature(no_param_func)
-
-        # 检查签名的字符串表示
-        signature_str = str(signature)
-        assert "()" in signature_str
+import pytest
+from dynamic_params.utils.cache import generate_cache_key
+from dynamic_params.utils.decorators import create_decorator
+from dynamic_params.utils.validation import validate_parametrize_args
+from dynamic_params.errors import ParametrizeError
 
 
-class TestValidateParamName:
-    """validate_param_name函数的测试类"""
+class TestGenerateCacheKey:
+    """Test generate_cache_key function"""
+    
+    def test_generate_cache_key_simple(self):
+        """Test generate_cache_key with simple arguments"""
+        key1 = generate_cache_key("func", [1, 2], {"a": 3})
+        key2 = generate_cache_key("func", [1, 2], {"a": 3})
+        assert key1 == key2
+    
+    def test_generate_cache_key_different_args(self):
+        """Test generate_cache_key with different arguments"""
+        key1 = generate_cache_key("func", [1, 2], {"a": 3})
+        key2 = generate_cache_key("func", [1, 3], {"a": 3})
+        assert key1 != key2
+    
+    def test_generate_cache_key_different_kwargs(self):
+        """Test generate_cache_key with different kwargs"""
+        key1 = generate_cache_key("func", [1, 2], {"a": 3})
+        key2 = generate_cache_key("func", [1, 2], {"a": 4})
+        assert key1 != key2
+    
+    def test_generate_cache_key_different_func(self):
+        """Test generate_cache_key with different function name"""
+        key1 = generate_cache_key("func1", [1, 2], {"a": 3})
+        key2 = generate_cache_key("func2", [1, 2], {"a": 3})
+        assert key1 != key2
+    
+    def test_generate_cache_key_empty(self):
+        """Test generate_cache_key with empty arguments"""
+        key = generate_cache_key("func", [], {})
+        assert isinstance(key, str)
 
-    def test_valid(self):
-        """测试有效的参数名称"""
-        assert validate_param_name("valid_name") is True
-        assert validate_param_name("name123") is True
-        assert validate_param_name("_private") is True
-        assert validate_param_name("mixed_Case_Name") is True
 
-    def test_invalid(self):
-        """测试无效的参数名称"""
-        assert validate_param_name("") is False
-        assert validate_param_name("123invalid") is False  # 不能以数字开头
-        assert validate_param_name("name with spaces") is False  # 不能包含空格
-        assert validate_param_name("name-invalid") is False  # 不能包含连字符
-        assert validate_param_name("name.invalid") is False  # 不能包含点号
+class TestCreateDecorator:
+    """Test create_decorator function"""
+    
+    def test_create_decorator_with_parentheses(self):
+        """Test create_decorator with parentheses"""
+        def decorator_func(func, arg1, arg2=None):
+            func.decorator_arg1 = arg1
+            func.decorator_arg2 = arg2
+            return func
+        
+        decorator = create_decorator(decorator_func)
+        
+        @decorator(arg1="value1", arg2="value2")
+        def test_func():
+            pass
+        
+        assert test_func.decorator_arg1 == "value1"
+        assert test_func.decorator_arg2 == "value2"
+    
+    def test_create_decorator_without_parentheses(self):
+        """Test create_decorator without parentheses"""
+        def decorator_func(func):
+            func.decorator_applied = True
+            return func
+        
+        decorator = create_decorator(decorator_func)
+        
+        @decorator
+        def test_func():
+            pass
+        
+        assert test_func.decorator_applied is True
+    
+    def test_create_decorator_no_args(self):
+        """Test create_decorator with no arguments"""
+        def decorator_func(func):
+            func.decorator_applied = True
+            return func
+        
+        decorator = create_decorator(decorator_func)
+        
+        @decorator()
+        def test_func():
+            pass
+        
+        assert test_func.decorator_applied is True
 
-    def test_none_or_non_string(self):
-        """测试None或非字符串参数"""
-        assert validate_param_name(None) is False
-        assert validate_param_name(123) is False
-        assert validate_param_name([]) is False
-        assert validate_param_name({}) is False
 
-
-class TestNormalizeParamValue:
-    """normalize_param_value函数的测试类"""
-
-    def test_normalize_param_value(self):
-        """测试参数值标准化"""
-        # normalize_param_value函数目前只是返回原始值
-        assert normalize_param_value("test") == "test"
-        assert normalize_param_value(123) == 123
-        assert normalize_param_value([1, 2, 3]) == [1, 2, 3]
-        assert normalize_param_value({"key": "value"}) == {"key": "value"}
-        assert normalize_param_value(None) is None
-
-    def test_normalize_param_value_special_cases(self):
-        """测试参数值标准化的特殊情况"""
-        assert normalize_param_value(True) is True
-        assert normalize_param_value(False) is False
-        assert normalize_param_value(0) == 0
-        assert normalize_param_value("") == ""
+class TestValidateParametrizeArgs:
+    """Test validate_parametrize_args function"""
+    
+    def test_validate_parametrize_args_valid(self):
+        """Test validate_parametrize_args with valid arguments"""
+        validate_parametrize_args("a,b", [[1, 2], [3, 4]])
+    
+    def test_validate_parametrize_args_invalid_argnames_type(self):
+        """Test validate_parametrize_args with invalid argnames type"""
+        with pytest.raises(ParametrizeError):
+            validate_parametrize_args(123, [[1, 2]])
+    
+    def test_validate_parametrize_args_invalid_argvalues_type(self):
+        """Test validate_parametrize_args with invalid argvalues type"""
+        with pytest.raises(ParametrizeError):
+            validate_parametrize_args("a,b", "not a list")
+    
+    def test_validate_parametrize_args_empty_argnames(self):
+        """Test validate_parametrize_args with empty argnames"""
+        with pytest.raises(ParametrizeError):
+            validate_parametrize_args("", [[1, 2]])
+    
+    def test_validate_parametrize_args_empty_argvalues(self):
+        """Test validate_parametrize_args with empty argvalues"""
+        with pytest.raises(ParametrizeError):
+            validate_parametrize_args("a,b", [])

@@ -469,7 +469,6 @@ def test_fixture_parameterization(environment, env_config, service, config_data)
 
 # 示例7：静态fixture调用静态参数 - 数据转换链
 @pytest.fixture
-@pytest.mark.parametrize("input_value", [1, 2, 3, 5, 10])
 def static_param_fixture(input_value):
     """使用静态参数的静态fixture
 
@@ -530,7 +529,6 @@ def test_static_fixture_with_static_param(
 
 # 示例8：动态fixture调用静态参数 - 复杂参数组合
 @pytest.fixture(params=[1, 2, 3, 5])
-@pytest.mark.parametrize("multiplier", [10, 20, 50])
 def dynamic_fixture_with_static_param(request, multiplier):
     """使用静态参数的动态fixture
 
@@ -687,7 +685,7 @@ def test_risky_operation_success(input_value, risky_result):
 
 @use_generators(risky_result=risky_operation)
 @pytest.mark.parametrize("input_value", [0, -5])
-def test_risky_operation_failure(input_value):
+def test_risky_operation_failure(input_value, risky_result):
     """测试风险操作失败情况
 
     验证参数生成器在异常情况下的行为
@@ -762,3 +760,102 @@ def test_complex_data_structures(structure_type, size, complex_data):
         assert "data" in complex_data["level1"]
         assert isinstance(complex_data["level1"]["data"], list)
         assert len(complex_data["level1"]["data"]) == size
+
+
+# 示例12：动态参数化 - 使用dynamic_parametrize装饰器
+from dynamic_params import dynamic_parametrize, DynRef
+
+
+@pytest.fixture
+def base_config():
+    """基础配置fixture
+
+    提供基础配置信息
+    """
+    return {
+        "api_url": "http://localhost:8000",
+        "timeout": 30,
+        "api_key": "test-key",
+        "version": "1.0.0"
+    }
+
+
+@pytest.fixture
+def environment():
+    """环境配置fixture
+
+    提供环境配置信息
+    """
+    return "http://dev-api.example.com"
+
+
+@dynamic_parametrize(
+    "endpoint, expected_status",
+    [
+        ("/api/users", 200),
+        ("/api/products", 200),
+        ("/api/orders", 200),
+        ("/api/invalid", 404)
+    ]
+)
+def test_basic_dynamic_parametrize(endpoint, expected_status):
+    """测试基础dynamic_parametrize功能
+
+    验证dynamic_parametrize装饰器的基本使用方法
+    """
+    assert isinstance(endpoint, str)
+    assert isinstance(expected_status, int)
+
+
+@dynamic_parametrize(
+    "env, endpoint, timeout",
+    [
+        ("dev", "/api/users", 10),
+        ("test", "/api/products", 30),
+        ("prod", "/api/orders", 60)
+    ]
+)
+def test_dynamic_parametrize_with_params(env, endpoint, timeout):
+    """测试dynamic_parametrize与普通参数的结合
+
+    验证dynamic_parametrize装饰器能否正确处理普通参数
+    """
+    assert env in ["dev", "test", "prod"]
+    assert isinstance(endpoint, str)
+    assert isinstance(timeout, int)
+
+
+@dynamic_parametrize(
+    "environment, endpoint",
+    [
+        (DynRef("environment"), "/api/users"),
+        (DynRef("environment"), "/api/products"),
+        (DynRef("environment"), "/api/orders")
+    ]
+)
+def test_dynamic_parametrize_with_fixture(environment, endpoint):
+    """测试dynamic_parametrize与fixture的结合
+
+    验证dynamic_parametrize装饰器能否正确处理fixture引用
+    """
+    assert isinstance(environment, str)
+    assert isinstance(endpoint, str)
+    assert environment.startswith("http")
+
+
+@dynamic_parametrize(
+    "base_config, endpoint",
+    [
+        (DynRef("base_config"), "/api/users"),
+        (DynRef("base_config"), "/api/products")
+    ]
+)
+def test_dynamic_parametrize_with_complex_values(base_config, endpoint):
+    """测试dynamic_parametrize与复杂值的结合
+
+    验证dynamic_parametrize装饰器能否正确处理复杂的参数值
+    """
+    assert isinstance(base_config, dict)
+    assert isinstance(endpoint, str)
+    expected_url = base_config["api_url"] + endpoint
+    assert isinstance(expected_url, str)

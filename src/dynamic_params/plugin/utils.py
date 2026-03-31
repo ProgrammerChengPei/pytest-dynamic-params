@@ -1,67 +1,47 @@
-"""插件工具函数模块"""
+# Plugin utility functions
 
-from typing import Any, Dict, List
+from typing import Any, Dict
 
+from pytest import Config
 
-class PluginUtils:
-    """插件工具类"""
+def get_plugin_config(config: Config) -> Dict[str, Any]:
+    """Get plugin configuration from pytest config
+    
+    Args:
+        config: pytest's Config object
+        
+    Returns:
+        Dictionary of plugin configuration
+    """
+    plugin_config = {
+        "default_cache": False,
+        "default_lazy": False,
+        "default_scope": "function"
+    }
+    
+    # Load configuration from pytest.ini
+    if hasattr(config, 'getini'):
+        default_cache = config.getini("dynamic_params_default_cache")
+        if default_cache:
+            plugin_config["default_cache"] = default_cache.lower() == "true"
+        
+        default_lazy = config.getini("dynamic_params_default_lazy")
+        if default_lazy:
+            plugin_config["default_lazy"] = default_lazy.lower() == "true"
+        
+        default_scope = config.getini("dynamic_params_default_scope")
+        if default_scope:
+            plugin_config["default_scope"] = default_scope
+    
+    return plugin_config
 
-    @staticmethod
-    def extract_dynamic_params(func) -> Dict[str, Any]:
-        """提取函数中的动态参数映射
-
-        Args:
-            func: 函数对象
-
-        Returns:
-            动态参数映射字典
-        """
-        return getattr(func, "_mapping", {})
-
-    @staticmethod
-    def is_dynamic_parametrized(func) -> bool:
-        """检查函数是否使用了 @dynamic_parametrize 装饰器
-
-        Args:
-            func: 函数对象
-
-        Returns:
-            是否使用了 @dynamic_parametrize 装饰器
-        """
-        return hasattr(func, "_is_parametrized")
-
-    @staticmethod
-    def is_use_generators(func) -> bool:
-        """检查函数是否使用了 @use_generators 装饰器
-
-        Args:
-            func: 函数对象
-
-        Returns:
-            是否使用了 @use_generators 装饰器
-        """
-        return hasattr(func, "_is_mapped")
-
-    @staticmethod
-    def get_parametrize_info(func) -> List[Dict[str, Any]]:
-        """获取函数的参数化信息
-
-        Args:
-            func: 函数对象
-
-        Returns:
-            参数化信息列表
-        """
-        return getattr(func, "_parametrize_info", [])
-
-    @staticmethod
-    def get_generator_mapping(func) -> Dict[str, Any]:
-        """获取函数的生成器映射
-
-        Args:
-            func: 函数对象
-
-        Returns:
-            生成器映射字典
-        """
-        return getattr(func, "_mapping", {})
+def is_xdist_enabled(config: Config) -> bool:
+    """Check if pytest-xdist is enabled
+    
+    Args:
+        config: pytest's Config object
+        
+    Returns:
+        True if xdist is enabled, False otherwise
+    """
+    return hasattr(config, 'workerinput')
