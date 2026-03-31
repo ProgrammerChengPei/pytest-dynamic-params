@@ -58,7 +58,7 @@ def test_user(user_id, expected):
 ```python
 from dynamic_params import parametrize_test
 
-@parametrize_test("user_id", "generator:generate_user_ids")
+@parametrize_test("user_id", generate_user_ids)
 def test_user(user_id):
     assert isinstance(user_id, int)
     assert user_id >= 0
@@ -242,6 +242,7 @@ def generate_large_dataset():
 对于 pytest-xdist 并行测试，插件提供自动同步机制：
 
 **静态数据 - 自动预加载**：
+
 ```python
 @param_generator(scope='session', cache=True)
 def generate_static_config():
@@ -250,6 +251,7 @@ def generate_static_config():
 ```
 
 **实时数据 - Worker 独立**：
+
 ```python
 from dynamic_params.engine.generator.worker_pool import WorkerPool
 
@@ -264,6 +266,7 @@ def generate_realtime_orders():
 ```
 
 **核心优势**：
+
 - ✅ **装饰器零改动**：无需在装饰器中添加额外参数
 - ✅ **自动预加载**：Session/module 级别的生成器自动预加载
 - ✅ **Worker 隔离**：每个 Worker 对实时数据有独立连接
@@ -273,13 +276,13 @@ def generate_realtime_orders():
 
 ### 功能对比
 
-| 功能 | pytest.mark.parametrize | 本插件 |
-|------|-------------------------|--------|
-| 测试函数参数化 | ✅ | ✅（@parametrize_test） |
-| Fixture 参数化 | ❌ | ✅（@parametrize_fixture） |
-| 生成器参数化 | ❌ | ✅（@parametrize_generator）|
-| 动态参数引用 | ❌ | ✅（DynRef） |
-| 动态参数生成 | ❌ | ✅（@param_generator） |
+| 功能          | pytest.mark.parametrize | 本插件                        |
+| ----------- | ----------------------- | -------------------------- |
+| 测试函数参数化     | ✅                       | ✅（@parametrize\_test）      |
+| Fixture 参数化 | ❌                       | ✅（@parametrize\_fixture）   |
+| 生成器参数化      | ❌                       | ✅（@parametrize\_generator） |
+| 动态参数引用      | ❌                       | ✅（DynRef）                  |
+| 动态参数生成      | ❌                       | ✅（@param\_generator）       |
 
 ### 使用建议
 
@@ -327,10 +330,13 @@ MIT License
 ## 常见问题
 
 ### Q: 生成器函数可以返回任意类型的数据吗？
+
 A: 是的，生成器可以返回任何可迭代的数据类型，包括列表、元组、生成器表达式等。
 
 ### Q: 可以在一个测试函数上使用多个参数化装饰器吗？
+
 A: 是的，支持在同一个测试函数上使用多个参数化装饰器，它们会组合生成所有可能的参数组合。
 
 ### Q: 插件支持 pytest 的所有版本吗？
+
 A: 插件支持 pytest 7.0+ 版本，建议使用最新版本以获得最佳体验。
