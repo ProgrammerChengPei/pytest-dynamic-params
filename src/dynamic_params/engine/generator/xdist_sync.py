@@ -12,16 +12,13 @@
 """
 
 import json
-import pickle
-import hashlib
-from typing import Dict, List, Any, Optional, Callable
-from pathlib import Path
 import tempfile
-import os
+from pathlib import Path
+from typing import Any, Callable, Dict, Optional
 
-from .base import GeneratorBase
-from .registry import GeneratorRegistry, registry as global_registry
 from ...types import GeneratorFunc
+from .base import GeneratorBase
+from .registry import registry as global_registry
 
 
 class GeneratorMetadata:
@@ -252,27 +249,27 @@ xdist_sync = XdistGeneratorSync()
 
 
 # pytest 钩子函数
-def pytest_configure(config: Any) -> None:
-    """pytest 配置钩子"""
-    # 判断是否是主进程
-    if hasattr(config, 'workerinput'):
-        # worker 进程
-        xdist_sync.initialize_for_worker(config)
-        xdist_sync.sync_from_master(config)
-    else:
-        # 主进程
-        xdist_sync.initialize_for_master()
-
-
-def pytest_configure_node(node: Any) -> None:
-    """配置 worker 节点钩子"""
-    # 将同步信息传递给 worker
-    xdist_sync.sync_to_worker(node.workerinput)
-
-
-def pytest_unconfigure(config: Any) -> None:
-    """pytest 卸载钩子"""
-    xdist_sync.cleanup()
+# 这些钩子函数已经在 pytest_plugin.py 中定义，此处注释掉以避免重复
+# def pytest_configure(config: Any) -> None:
+#     """pytest 配置钩子"""
+#     if hasattr(config, 'workerinput'):
+#         # Worker 进程
+#         xdist_sync.initialize_for_worker(config)
+#         xdist_sync.sync_from_master(config)
+#     else:
+#         # 主进程
+#         xdist_sync.initialize_for_master()
+# 
+# 
+# def pytest_configure_node(node: Any) -> None:
+#     """配置 worker 节点钩子"""
+#     # 将同步信息传递给 worker
+#     xdist_sync.sync_to_worker(node.workerinput)
+# 
+# 
+# def pytest_unconfigure(config: Any) -> None:
+#     """pytest 卸载钩子"""
+#     xdist_sync.cleanup()
 
 
 # 装饰器包装器，用于自动注册生成器元数据

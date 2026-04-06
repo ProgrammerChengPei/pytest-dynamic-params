@@ -9,10 +9,12 @@
 ## 组件
 
 **pytest 原生组件** ：
+
 - fixture
 - pytest.mark.parametrize
 
 **插件组件**：
+
 - param_generator
 - parametrize_test
 - parametrize_generator
@@ -59,7 +61,6 @@ status 取值及含义：
 
 | 状态 | 含义 | 使用场景 |
 |------|------|---------|
-| `uncollected` | 收集阶段失败 | 模块级别使用装饰器、DynRef 在模块级别运算等导致 pytest 无法收集的情况 |
 | `passed` | 测试通过 | 正常工作的测试用例 |
 | `failed` | 测试失败 | 运行时断言失败的测试用例 |
 | `error` | 测试出错 | 运行时抛出异常的测试用例 |
@@ -70,26 +71,30 @@ status 取值及含义：
 ### 测试用例分类
 
 - 失败示例：
-    - 展示常见的错误使用方式以及错误原因
-    - 状态为 `failed` 或 `error`
-    - 必须只使用组合中的插件组件，不能随意增加或减少插件组件，但是 pytest 原生组件可以随意使用
+  - 展示常见的错误使用方式以及错误原因
+  - 会导致收集失败的用例示例，或可以收集但是执行后状态为 `failed` 或 `error`的用例
+  - 必须只使用组合中的插件组件，不能随意增加或减少插件组件，但是 pytest 原生组件可以随意使用
+  - 如果会导致收集失败，标记为 `pytest.mark.skip_collection_error(reason={导致收集失败的原因})` 跳过收集。注意不是使用 `@pytest.mark.skip` 去跳过, `@pytest.mark.skip` 只在执行阶段生效。
+  - 如果可以收集，标记为 `pytest.mark.{status}`
 
 - 推荐用法示例：
-    - 每个失败示例都必须给出一个能解决失败问题的推荐用法示例，展示插件实现相同功能的推荐使用方式
-    - 状态为 `passed`
-    - 标记为 `@pytest.mark.recommended`
-    - 可以使用解决问题必要的任意组件，包含不在组合内的插件组件和 pytest 原生组件
-    - 如果支持并且推荐使用，既要展示只使用 pytest 原生组件的测试用例，又要展示使用插件的测试用例，这样才能直观地说明插件的独特优势
+  - 每个失败示例都必须给出一个能解决失败问题的推荐用法示例，展示插件实现相同功能的推荐使用方式
+  - 状态为 `passed`
+  - 标记为 `@pytest.mark.recommended`
+  - 可以使用解决问题必要的任意组件，包含不在组合内的插件组件和 pytest 原生组件
+  - 如果支持并且推荐使用，既要展示只使用 pytest 原生组件的测试用例，又要展示使用插件的测试用例，这样才能直观地说明插件的独特优势
 
 - 成功示例：
-    - 展示插件比原生pytest多出的、或更好用的功能及其正确使用方式
-    - status 为 `passed`
-    - 必须只使用组合中的插件组件，不能随意增加或减少插件组件，但是 pytest 原生组件可以随意使用
-    - 应尽可能覆盖更多的插件使用场景
+  - 展示插件比原生pytest多出的、或更好用的功能及其正确使用方式
+  - status 为 `passed`
+  - 必须只使用组合中的插件组件，不能随意增加或减少插件组件，但是 pytest 原生组件可以随意使用
+  - 应尽可能覆盖更多的插件使用场景
 
 ### 测试用例格式
 
-下面示例展示了测试文件头、测试用例的格式。
+测试文件头、测试用例的格式如下。
+
+**测试文件头格式**：
 
 ```python
 """
@@ -100,46 +105,72 @@ status 取值及含义：
 
 结论：{简要说明使用要点}
 """
-import pytest
-from dynamic_params import param_generator, parametrize_test
+```
 
-# ============== 示例 01：同时使用 parametrize 与 fixture ==============
+**失败示例格式**：
 
-@pytest.mark.parametrize("value", [1, 2, 3])
-def fix_a(value):
+- 在前面注释 `# 失败示例 {失败序号}：{测试内容}`
+- 在用例前面标记 `@pytest.mark.skip_collection_error` 或 `@pytest.mark.{status}`
+
+```python
+# 失败示例 01: @pytest.mark.parametrize 不能参数化 fixture
+@pytest.fixture
+def _double(value):
     """基础 fixture"""
     return value * 2
 
-@pytest.mark.uncollected(reason="parametrize 与 fixture 同时使用会报错")
-def test_basic(fix_a):
+@pytest.mark.skip_collection_error(reason="AI 自己补充")
+@pytest.mark.parametrize("value", [1, 2, 3])
+def test_mark_param_fix(_double):
     """测试基础参数生成"""
     assert fix_a in [2, 4, 6]
+```
 
+**推荐用法示例格式**：
 
-# ============== 示例 01 的推荐用法示例 ==============
+- 在前面注释 `# {失败示例的用例名} 的推荐用法示例 {推荐序号}：{推荐内容}`
+- 每个失败示例的推荐用法示例的序号，都从1开始
+- 用例名 `{失败示例的用例名}_recommended`
+- 在用例前面标记 `@pytest.mark.recommended`
+
+```python
+# test_mark_param_and_fix 的推荐用法示例 01: @param_generator 可以被参数化后，再通过 @parametrize_test 参数化测试用例
+@pytest.mark.recommended
+@param_generator
+def gen_double(value):
+    """基础参数生成器"""
+    return value * 2
+
+@pytest.mark.parametrize("value", [1, 2, 3])
+@parametrize_test("double_", gen_double)
+def test_mark_param_and_fix_recommended(value, double_):
+    """测试基础参数生成"""
+    assert double == 2 * value
+    
+```
+
+**成功示例格式**：
+
+- 在前面注释 `# 成功示例 {成功序号}：{测试内容}`
+- 在用例前面标记 `@pytest.mark.passed`
+
+```python
+# 成功示例 01: parametrize_test 基础参数化
+def generate_test_cases():
+    cases = []
+    for i in range(1, 6):
+        cases.append((i, i * 2))
+    return cases
 
 @pytest.mark.passed
-def test_basic_recommended():
-    """测试基础参数生成 - 推荐版本（使用 param_generator）"""
-
-    @param_generator
-    def gen_a(value):
-        """基础参数生成器"""
-        return value * 2
-    
-    @pytest.mark.parametrize("value", [1, 2, 3])
-    @parametrize_test("double", gen_a)
-    def test(value, double):
-        """测试基础参数生成"""
-        assert double == 2 * value
-    
-    # 手动调用
-    test()
+@parametrize_test("num, doubled", generate_test_cases())
+def test_param_test(num, doubled):
+    assert num * 2 == doubled
 ```
 
 ### 测试用例生成规则
 
-每种组件组合，采用"(失败示例 -> 推荐用法示例) + 成功示例"模式。
+每种组件组合，采用"(失败示例 -> 推荐用法示例) + 成功示例"模式，必须包含失败示例和成功示例中的其中一个，可以都包含但不是必须。
 
 ## 运行测试
 
@@ -163,6 +194,9 @@ pytest test_combo_02/test_gen_and_param_test.py
 
 1. 所有测试文件都应该导入必要的组件
 2. 使用统一的命名和代码风格
-3. 每个测试函数都应该有清晰的文档字符串
-5. 测试应该独立运行，不依赖其他测试的执行顺序
-6. 测试应该覆盖所有可能的场景，包括边界条件和异常情况
+3. 测试应该独立运行，不依赖其他测试的执行顺序
+4. 测试应该覆盖所有可能的场景，包括边界条件和异常情况
+
+## 依赖的 pytest 插件
+
+- `pytest-skip-collection-error`: 用于标记并跳过收集错误的测试用例

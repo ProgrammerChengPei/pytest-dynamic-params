@@ -11,17 +11,15 @@
 """
 
 import json
-import hashlib
-from typing import Any, Dict, List, Optional, Callable
-from pathlib import Path
 import tempfile
-from contextlib import contextmanager
 import threading
+from contextlib import contextmanager
+from pathlib import Path
+from typing import Any, Callable, Dict, List, Optional
 
+from ...types import GeneratorFunc
 from .base import GeneratorBase
 from .registry import registry as global_registry
-from ...types import GeneratorFunc
-
 
 # ============================================================================
 # 外部资源生成器基类
@@ -378,28 +376,29 @@ db_pool = DatabasePool()
 # pytest 钩子函数
 # ============================================================================
 
-def pytest_configure(config: Any) -> None:
-    """pytest 配置钩子"""
-    if hasattr(config, 'workerinput'):
-        # Worker 进程
-        print("[pytest_configure] Initializing for worker")
-        resource_preloader.initialize_for_worker(config)
-        resource_preloader.sync_from_master(config)
-    else:
-        # 主进程
-        print("[pytest_configure] Initializing for master")
-        resource_preloader.initialize_for_master()
-
-
-def pytest_configure_node(node: Any) -> None:
-    """配置 worker 节点钩子"""
-    print("[pytest_configure_node] Syncing to worker")
-    resource_preloader.sync_to_worker(node.workerinput)
-
-
-def pytest_unconfigure(config: Any) -> None:
-    """pytest 卸载钩子"""
-    print("[pytest_unconfigure] Cleaning up")
-    resource_preloader.cleanup()
-    if 'db_pool' in globals():
-        db_pool.close_all()
+# 这些钩子函数已经在 pytest_plugin.py 中定义，此处注释掉以避免重复
+# def pytest_configure(config: Any) -> None:
+#     """pytest 配置钩子"""
+#     if hasattr(config, 'workerinput'):
+#         # Worker 进程
+#         print("[pytest_configure] Initializing for worker")
+#         resource_preloader.initialize_for_worker(config)
+#         resource_preloader.sync_from_master(config)
+#     else:
+#         # 主进程
+#         print("[pytest_configure] Initializing for master")
+#         resource_preloader.initialize_for_master()
+# 
+# 
+# def pytest_configure_node(node: Any) -> None:
+#     """配置 worker 节点钩子"""
+#     print("[pytest_configure_node] Syncing to worker")
+#     resource_preloader.sync_to_worker(node.workerinput)
+# 
+# 
+# def pytest_unconfigure(config: Any) -> None:
+#     """pytest 卸载钩子"""
+#     print("[pytest_unconfigure] Cleaning up")
+#     resource_preloader.cleanup()
+#     if 'db_pool' in globals():
+#         db_pool.close_all()

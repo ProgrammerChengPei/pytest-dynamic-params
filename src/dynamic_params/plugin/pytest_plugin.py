@@ -53,22 +53,29 @@ def _initialize_sync(config: Config) -> None:
     except Exception as e:
         print(f"[pytest_configure] Failed to initialize sync: {e}")
 
-def pytest_configure_node(node) -> None:
-    """Configure worker node
-    
-    Args:
-        node: Worker node object
-    """
-    try:
-        from ..engine.generator.sync_manager import sync_manager
+try:
+    import pytest_xdist
+
+    # Only define this hook if pytest-xdist is available
+    def pytest_configure_node(node) -> None:
+        """Configure worker node (pytest-xdist specific hook)
         
-        # Pass sync config via pytest hook
-        config_data = sync_manager.get_sync_config()
-        node.workerinput['sync_config'] = config_data
-        
-        print(f"[pytest_configure_node] Sent config to worker {node.workerinput.get('workerid')}")
-    except Exception as e:
-        print(f"[pytest_configure_node] Failed to configure node: {e}")
+        Args:
+            node: Worker node object
+        """
+        try:
+            from ..engine.generator.sync_manager import sync_manager
+
+            # Pass sync config via pytest hook
+            config_data = sync_manager.get_sync_config()
+            node.workerinput['sync_config'] = config_data
+            
+            print(f"[pytest_configure_node] Sent config to worker {node.workerinput.get('workerid')}")
+        except Exception as e:
+            print(f"[pytest_configure_node] Failed to configure node: {e}")
+except ImportError:
+    # pytest-xdist not installed, skip this hook
+    pass
 
 def pytest_unconfigure(config: Config) -> None:
     """Cleanup on pytest unconfigure

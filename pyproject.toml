@@ -47,7 +47,7 @@ dev = [
 ]
 
 [project.entry-points.pytest11]
-dynamic-params = "dynamic_params.plugin"
+dynamic-params = "dynamic_params.plugin.pytest_plugin"
 
 [build-system]
 requires = ["setuptools", "wheel"]
