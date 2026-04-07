@@ -1,15 +1,15 @@
 # Test decorators module
 
-import pytest
 import warnings
-from unittest.mock import patch, Mock
-from dynamic_params.public.decorators.parametrize_test import parametrize_test
-from dynamic_params.public.decorators.parametrize_fixture import parametrize_fixture
-from dynamic_params.public.decorators.parametrize_generator import parametrize_generator
-from dynamic_params.public.decorators.param_generator import param_generator
-from dynamic_params.engine.generator.registry import registry as generator_registry
+
+import pytest
 from dynamic_params.engine.generator.base import GeneratorBase
 from dynamic_params.engine.generator.lazy import LazyGenerator
+from dynamic_params.engine.generator.registry import registry as generator_registry
+from dynamic_params.public.decorators.param_generator import param_generator
+from dynamic_params.public.decorators.parametrize_fixture import parametrize_fixture
+from dynamic_params.public.decorators.parametrize_generator import parametrize_generator
+from dynamic_params.public.decorators.parametrize_test import parametrize_test
 
 
 class TestParametrizeTestDecorator:
@@ -108,6 +108,56 @@ class TestParametrizeFixtureDecorator:
             warnings.simplefilter("ignore")
             result = parametrize_fixture("value", [1, 2, 3], scope="session")(my_fixture)
         assert result is not None
+
+    def test_parametrize_fixture_with_cache_support(self):
+        """Test parametrize_fixture supports cache wrapping"""
+        def gen_values():
+            yield 1
+            yield 2
+
+        def my_fixture(value):
+            return value * 2
+
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            result = parametrize_fixture("value", gen_values, cache=True)(my_fixture)
+
+        assert result is not None
+        config = result._dynamic_fixture_parametrize[0]
+        assert config["argnames"] == "value"
+        assert config["argvalues"].__class__.__name__ == "GeneratorBase"
+
+    def test_parametrize_fixture_with_lazy_support(self):
+        """Test parametrize_fixture supports lazy wrapping"""
+        def gen_values():
+            yield 3
+            yield 4
+
+        def my_fixture(value):
+            return value * 2
+
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            result = parametrize_fixture("value", gen_values, lazy=True)(my_fixture)
+
+        assert result is not None
+        config = result._dynamic_fixture_parametrize[0]
+        assert config["argnames"] == "value"
+        assert config["argvalues"].__class__.__name__ == "LazyGenerator"
+
+    def test_parametrize_fixture_warns_on_pytest_fixture_combination(self):
+        """Test parametrize_fixture warns if function is already a pytest fixture"""
+        def my_fixture(value):
+            return value * 2
+
+        py_fixture = pytest.fixture()(my_fixture)
+
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            result = parametrize_fixture("value", [1, 2, 3])(py_fixture)
+
+        assert result is not None
+        assert any("not supported" in str(warn.message) for warn in w)
 
 
 class TestParametrizeGeneratorDecorator:

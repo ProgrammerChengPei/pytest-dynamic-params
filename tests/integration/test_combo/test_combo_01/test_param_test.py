@@ -14,7 +14,7 @@ from dynamic_params import parametrize_test
 # ============== 成功示例 ==============
 
 
-# 成功示例 01：parametrize_test 参数化
+# 成功示例 01：parametrize_test 基础参数化
 def generate_test_cases():
     cases = []
     for i in range(1, 6):
@@ -95,5 +95,14 @@ def test_multi_fixture(num, mult):
 @pytest.mark.parametrize("num", get_nums())
 @parametrize_test("mult", get_multipliers())
 def test_with_mark_parametrize(num, mult):
+    result = num * mult
+    assert result > 0
+
+
+# 成功示例 07：parametrize_test 支持函数对象
+@pytest.mark.passed
+@pytest.mark.parametrize("num", get_nums())
+@parametrize_test("mult", get_multipliers)
+def test_func(num, mult):
     result = num * mult
     assert result > 0

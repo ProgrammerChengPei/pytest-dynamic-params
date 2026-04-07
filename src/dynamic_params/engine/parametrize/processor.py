@@ -59,6 +59,13 @@ class ParametrizeProcessor:
 
                 # Get the underlying function
                 underlying = getattr(argvalues, "__wrapped__", None) or argvalues
+
+                # Check if fixture was created by parametrize_fixture decorator
+                # Check both the fixture function itself and the underlying function
+                fixture_parametrize_config = getattr(
+                    argvalues, "_dynamic_fixture_parametrize", None
+                ) or getattr(underlying, "_dynamic_fixture_parametrize", None)
+
                 # Check if fixture has params= defined (parametrized fixture)
                 fixture_marker = (
                     getattr(argvalues, "__pytestfixturefunction__", None)
@@ -67,14 +74,36 @@ class ParametrizeProcessor:
                 )
                 fixture_params = getattr(fixture_marker, "params", None)
 
-                if fixture_params is not None:
-                    # Fixture has params= - each param becomes one test case value
-                    remaining.append(
-                        {
-                            "argnames": argnames_str,
-                            "argvalues": list(fixture_params),
-                        }
-                    )
+                if fixture_parametrize_config is not None or fixture_params is not None:
+                    # Fixture was created by parametrize_fixture or has params=
+                    # If the requested argname matches the fixture name, inject it.
+                    # Otherwise use the fixture as a source of values.
+                    should_inject_fixture = fixture_name in argnames
+                    if should_inject_fixture:
+                        if fixture_name and fixture_name not in metafunc.fixturenames:
+                            metafunc.fixturenames.append(fixture_name)
+                    else:
+                        if fixture_params is not None:
+                            remaining.append(
+                                {
+                                    "argnames": argnames_str,
+                                    "argvalues": list(fixture_params),
+                                }
+                            )
+                        else:
+                            try:
+                                result = underlying()
+                                if not isinstance(result, list):
+                                    result = [result]
+                                remaining.append(
+                                    {
+                                        "argnames": argnames_str,
+                                        "argvalues": result,
+                                    }
+                                )
+                            except Exception:
+                                if fixture_name and fixture_name not in metafunc.fixturenames:
+                                    metafunc.fixturenames.append(fixture_name)
                 elif not params or params == ["request"]:
                     # Fixture takes no args - call directly to get values
                     if not params:
@@ -263,23 +292,33 @@ class ParametrizeProcessor:
             else:
                 # If argvalues is not a list, resolve it and use it directly
                 # This supports direct function/generator references
-                resolved_value = self._resolve_value(argvalues, {}, metafunc)
-                # If resolved_value is a list (e.g., from a generator), expand it into separate test cases
-                if isinstance(resolved_value, list):
-                    # Each item in the list becomes a separate test case
-                    # For single parameter, use the item directly
-                    # For multiple parameters, wrap in tuple
-                    for item in resolved_value:
-                        if len(argnames) == 1:
-                            # Single parameter, use item directly
-                            resolved_argvalues.append(item)
-                        else:
-                            # Multiple parameters, wrap in list/tuple
-                            resolved_argvalues.append(
-                                item if isinstance(item, (list, tuple)) else [item]
-                            )
+                # Check if argvalues is a fixture function
+                if self._is_fixture(argvalues):
+                    # Fixture function - let pytest inject it
+                    fixture_name = getattr(argvalues, "__name__", None)
+                    if fixture_name and fixture_name not in metafunc.fixturenames:
+                        metafunc.fixturenames.append(fixture_name)
+                    # Use fixture name as parameter value (pytest will replace it)
+                    # For now, use a placeholder - pytest will inject the actual fixture value
+                    resolved_argvalues.append([argvalues])
                 else:
-                    resolved_argvalues.append([resolved_value])
+                    resolved_value = self._resolve_value(argvalues, {}, metafunc)
+                    # If resolved_value is a list (e.g., from a generator), expand it into separate test cases
+                    if isinstance(resolved_value, list):
+                        # Each item in the list becomes a separate test case
+                        # For single parameter, use the item directly
+                        # For multiple parameters, wrap in tuple
+                        for item in resolved_value:
+                            if len(argnames) == 1:
+                                # Single parameter, use item directly
+                                resolved_argvalues.append(item)
+                            else:
+                                # Multiple parameters, wrap in list/tuple
+                                resolved_argvalues.append(
+                                    item if isinstance(item, (list, tuple)) else [item]
+                                )
+                    else:
+                        resolved_argvalues.append([resolved_value])
 
             processed_parametrizations.append(
                 {"argnames": argnames, "argvalues": resolved_argvalues}
