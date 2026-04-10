@@ -6,7 +6,7 @@
 
 - **动态参数生成**：使用生成器函数动态生成测试参数，支持复杂逻辑
 - **扩展参数化**：支持对测试函数、fixture 和生成器进行参数化
-- **参数依赖**：支持参数间的依赖关系，使用 DynRef 实现参数引用
+- **链式参数依赖**：支持基于参数名自动匹配的链式依赖关系
 - **无缝集成**：与 pytest 原生功能完全兼容
 - **缓存策略**：生成器支持缓存，提高性能
 - **懒加载**：生成器支持懒加载，按需生成数据
@@ -45,10 +45,12 @@ def generate_user_ids():
 
 #### 参数化测试函数
 
-```python
-from dynamic_params import parametrize_test, DynRef
+使用 `@pytest.mark.parametrize` 进行标准参数化：
 
-@parametrize_test("user_id, expected", [[1, 2], [3, 4]])
+```python
+import pytest
+
+@pytest.mark.parametrize("user_id, expected", [[1, 2], [3, 4]])
 def test_user(user_id, expected):
     assert user_id + 1 == expected
 ```
@@ -56,22 +58,12 @@ def test_user(user_id, expected):
 #### 在参数化中使用生成器
 
 ```python
-from dynamic_params import parametrize_test
+import pytest
 
-@parametrize_test("user_id", generate_user_ids)
+@pytest.mark.parametrize("user_id", generate_user_ids)
 def test_user(user_id):
     assert isinstance(user_id, int)
     assert user_id >= 0
-```
-
-#### 使用 DynRef 实现参数依赖
-
-```python
-from dynamic_params import parametrize_test, DynRef
-
-@parametrize_test("a, b, sum", [[1, 2, DynRef("a") + DynRef("b")], [3, 4, DynRef("a") + DynRef("b")]])
-def test_sum(a, b, sum):
-    assert a + b == sum
 ```
 
 ### 高级用法
@@ -110,84 +102,102 @@ def test_api_url(full_url):
     assert full_url.startswith("http://")
 ```
 
-#### 参数化生成器
+#### 链式参数生成器
 
-使用 `@parametrize_generator` 对生成器进行参数化：
+动态参数生成器支持多级链式依赖，支持显式和隐式两种配置模式：
 
-**使用直接数值**：
-
-```python
-from dynamic_params import param_generator, parametrize_generator
-
-@param_generator
-@parametrize_generator("input_value", [1, 2, 3])
-def generate_results(input_value):
-    # 生成器接收参数化的 input_value
-    return [input_value * 2, input_value * 3]
-
-# 会产生 6 个结果：[2,3], [4,6], [6,9]
-```
-
-**使用其他生成器**：
+**显式依赖模式 - 使用 pytest.mark.parametrize**
 
 ```python
-from dynamic_params import param_generator, parametrize_generator
+import pytest
+from dynamic_params import param_generator
 
 @param_generator
-def generate_input_values():
+def generate_base_values():
+    """基础值生成器"""
     return [1, 2, 3]
 
 @param_generator
-@parametrize_generator("input_value", generate_input_values)
-def generate_results(input_value):
-    return [input_value * 2, input_value * 3]
+@pytest.mark.parametrize("base_value", generate_base_values)  # 显式依赖
+def generate_scaled_values(base_value):
+    """依赖基础值生成器"""
+    return [base_value * 2, base_value * 3]
 ```
 
-**使用 fixture**：
+**隐式依赖模式 - 参数名自动匹配**
 
 ```python
 import pytest
-from dynamic_params import param_generator, parametrize_generator
+from dynamic_params import param_generator
+
+@param_generator
+def base_values():
+    """基础值生成器"""
+    return [1, 2, 3]
+
+@param_generator
+def scale_factor():
+    """比例因子生成器"""
+    return [2, 3]
+
+@param_generator
+def scaled_values(base_values, scale_factor):  # 参数名与生成器名精确匹配
+    """依赖多个生成器的链式生成器"""
+    return [value * factor for value in base_values for factor in scale_factor]
+```
+
+#### 高级链式依赖示例
+
+**多级链式依赖（A → B → C 模式）**
+
+```python
+import pytest
+from dynamic_params import param_generator
+
+@param_generator
+def database_names():
+    """第一级：数据库名称"""
+    return ["primary", "secondary"]
+
+@param_generator
+@pytest.mark.parametrize("db_name", database_names)
+def table_names(db_name):
+    """第二级：数据库表名（依赖数据库名）"""
+    return [f"{db_name}_users", f"{db_name}_posts"]
+
+@param_generator
+@pytest.mark.parametrize("table_name", table_names)
+def query_templates(table_name):
+    """第三级：查询模板（依赖表名）"""
+    return [f"SELECT * FROM {table_name}", f"SELECT count(*) FROM {table_name}"]
+```
+
+**与原生 pytest 功能混合使用**
+
+```python
+import pytest
+from dynamic_params import param_generator
 
 @pytest.fixture
-def multiplier():
+def default_multiplier():
     return 2
 
 @param_generator
-@parametrize_generator("input_value", [1, 2, 3])
-def generate_scaled_values(input_value, multiplier):
-    # 依赖 input_value 参数和 multiplier fixture
-    return [input_value * multiplier, input_value * multiplier * 2]
-```
+def values_to_scale():
+    return [1, 2, 3]
 
-#### 复杂表达式和依赖
+@param_generator
+def scale_factors():
+    return [2, 3, 4]
 
-**引用 fixture**：
-
-```python
-import pytest
-from dynamic_params import parametrize_test, DynRef
-
-@pytest.fixture
-def base_value():
-    return 10
-
-@parametrize_test("input_value", [1, 2, 3])
-@parametrize_test("result", [DynRef("input_value") + DynRef("base_value")])
-def test_with_fixture(input_value, result):
-    assert result in [11, 12, 13]
-```
-
-**复杂表达式**：
-
-```python
-from dynamic_params import parametrize_test, DynRef
-
-@parametrize_test("a", [1, 2])
-@parametrize_test("b", [3, 4])
-@parametrize_test("result", [DynRef("a") + DynRef("b") * 2])
-def test_expression(result):
-    assert result in [7, 9, 10, 12]
+@param_generator
+def scaled_results(values_to_scale, scale_factors, default_multiplier):
+    # 依赖生成器 + fixture
+    results = []
+    for value in values_to_scale:
+        for factor in scale_factors:
+            results.append(value * factor * default_multiplier)
+    return results
 ```
 
 ## 配置
@@ -276,20 +286,19 @@ def generate_realtime_orders():
 
 ### 功能对比
 
-| 功能          | pytest.mark.parametrize | 本插件                        |
-| ----------- | ----------------------- | -------------------------- |
-| 测试函数参数化     | ✅                       | ✅（@parametrize\_test）      |
-| Fixture 参数化 | ❌                       | ✅（@parametrize\_fixture）   |
-| 生成器参数化      | ❌                       | ✅（@parametrize\_generator） |
-| 动态参数引用      | ❌                       | ✅（DynRef）                  |
-| 动态参数生成      | ❌                       | ✅（@param\_generator）       |
+| 功能                    | pytest.mark.parametrize | 本插件                               |
+| -------------------- | ----------------------- | --------------------------------- |
+| Fixture 参数化           | ❌                       | ✅（@parametrize\_fixture）          |
+| 动态参数生成（链式依赖）     | ❌                       | ✅（@param\_generator）              |
+| 生成器 scope 自动推断   | ❌                       | ✅（基于依赖的自动 scope 管理）        |
+| 隐式依赖识别（参数名匹配） | ❌                       | ✅（通过生成器名自动匹配）            |
 
 ### 使用建议
 
 - **简单参数化**：使用官方 `@pytest.mark.parametrize`
-- **需要动态参数或依赖**：使用插件的 `@parametrize_test`
 - **需要对 fixture 参数化**：使用插件的 `@parametrize_fixture`
-- **需要动态生成参数**：使用插件的 `@param_generator`
+- **需要动态生成链式依赖参数**：使用插件的 `@param_generator`
+- **生成器依赖管理**：结合 `@param_generator` 和 `@pytest.mark.parametrize` 实现显式依赖
 
 ### 兼容性
 

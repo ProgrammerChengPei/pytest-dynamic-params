@@ -119,7 +119,8 @@ def generate_realtime_orders():
 ### 示例 4：混合场景
 
 ```python
-from dynamic_params import param_generator, parametrize_test
+import pytest
+from dynamic_params import param_generator, parametrize_fixture
 from dynamic_params.engine.generator.worker_pool import WorkerPool
 
 # 静态数据 - 自动预加载
@@ -137,11 +138,22 @@ def generate_realtime_logs():
             yield {'id': row[0]}
 
 # 组合使用
-@parametrize_test("config", "generator:generate_config")
-@parametrize_test("log", "generator:generate_realtime_logs")
-def test_mixed_scenario(config, log):
-    assert 'timeout' in config
-    assert 'id' in log
+import pytest
+from dynamic_params import parametrize_fixture
+
+@parametrize_fixture("config", "generator:generate_config")
+@pytest.fixture
+def config_fixture(config):
+    return config
+
+@parametrize_fixture("log", "generator:generate_realtime_logs")
+@pytest.fixture
+def log_fixture(log):
+    return log
+
+def test_mixed_scenario(config_fixture, log_fixture):
+    assert 'timeout' in config_fixture
+    assert 'id' in log_fixture
 ```
 
 ### 示例 5：全局配置（可选）

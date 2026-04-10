@@ -8,7 +8,7 @@
 """
 
 import pytest
-from src.dynamic_params.public.decorators.param_generator import param_generator
+from dynamic_params import param_generator
 
 # ========== 第一级：基础数据源生成器 ==========
 
@@ -137,7 +137,7 @@ def test_multi_level_chain():
     print("business_logic_executor (4级) + quality_threshold (5级) → quality_assessor (5级)")
     
     # 测试各级生成器
-    print(f"\n📊 各级生成器用例数：")
+    print("\n📊 各级生成器用例数：")
     print(f"   第1级 - raw_data_source: {len(raw_data_source())}")
     print(f"   第1级 - operation_type: {len(operation_type())}")
     print(f"   第2级 - data_validator: {len(data_validator())}")
@@ -150,7 +150,7 @@ def test_multi_level_chain():
     total_cases = len(quality_assessor())
     expected_cases = len(raw_data_source()) * len(operation_type()) * len(quality_threshold())
     
-    print(f"\n🧮 链式组合计算：")
+    print("\n🧮 链式组合计算：")
     print(f"   原始数据源数: {len(raw_data_source())}")
     print(f"   操作类型数: {len(operation_type())}")
     print(f"   质量阈值数: {len(quality_threshold())}")

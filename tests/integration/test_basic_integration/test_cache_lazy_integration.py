@@ -2,7 +2,7 @@
 
 import pytest
 import time
-from dynamic_params import param_generator, parametrize_test
+from dynamic_params import param_generator, parametrize_fixture
 
 
 class TestGeneratorCaching:

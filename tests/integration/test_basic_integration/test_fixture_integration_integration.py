@@ -1,7 +1,6 @@
 # Integration tests for fixture parametrization functionality
 
-import pytest
-from dynamic_params import parametrize_fixture, param_generator, parametrize_test
+from dynamic_params import param_generator, parametrize_fixture
 
 
 class TestBasicFixtureParametrization:
@@ -77,21 +76,17 @@ class TestFixtureWithGenerators:
 
 
 class TestFixtureWithDynRef:
-    """Test fixture parametrization with DynRef"""
+    """Test fixture parametrization - placeholder for removed DynRef functionality"""
     
-    def test_fixture_with_dynref(self):
-        """Test fixture using DynRef for parametrization"""
-        from dynamic_params import DynRef
+    def test_fixture_parametrization(self):
+        """Test fixture parametrization with fixed values"""
         
-        @parametrize_fixture("base, multiplier, result", [
-            [2, 3, DynRef("base") * DynRef("multiplier")],
-            [5, 4, DynRef("base") * DynRef("multiplier")]
-        ])
-        def calculation_result(base, multiplier, result):
+        @parametrize_fixture("base_value", [2, 5])
+        def calculation_result(base_value):
             """Fixture that provides calculation result"""
+            result = base_value * 5
             return {
-                "base": base,
-                "multiplier": multiplier,
+                "base": base_value,
                 "result": result,
                 "formula": f"{base} * {multiplier} = {result}"
             }

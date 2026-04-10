@@ -4,7 +4,7 @@
 """
 
 import pytest
-from src.dynamic_params.public.decorators.param_generator import param_generator
+from dynamic_params import param_generator
 
 # ========== 重构示例1：数据处理管道（原多级依赖） ==========
 

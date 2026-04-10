@@ -11,7 +11,7 @@
 """
 
 import pytest
-from dynamic_params import parametrize_test, parametrize_generator, param_generator
+from dynamic_params import param_generator, parametrize_fixture
 
 
 # ============================================================================
@@ -181,8 +181,8 @@ def test_user_order_scenario():
     - user: 预加载的静态用户数据
     - order: 实时订单数据（每个 worker 独立查询）
     """
-    @parametrize_test("user", generate_test_users)
-    @parametrize_test("order", generate_realtime_orders)
+    @pytest.mark.parametrize("user", generate_test_users)
+    @pytest.mark.parametrize("order", generate_realtime_orders)
     def _test(user, order):
         assert 'username' in user
         assert 'id' in order
@@ -198,7 +198,7 @@ def test_currency_conversion():
     
     使用预加载的汇率数据
     """
-    @parametrize_test("rate", generate_exchange_rates)
+    @pytest.mark.parametrize("rate", generate_exchange_rates)
     def _test(rate, value=100):
         assert isinstance(rate, (int, float))
         converted = value * rate

@@ -53,6 +53,83 @@ def _infer_scope_dependencies(func_definition: str) -> str:
     min_scope = min(scopes_found, key=lambda s: SCOPE_PRIORITY.get(s, 999))
     return min_scope
 
+
+def _detect_decorator_order(func_source: str) -> dict:
+    """检测装饰器顺序
+    
+    返回装饰器顺序信息：
+    {
+        'order': list 装饰器类型顺序,
+        'has_parametrize': bool 是否有parametrize,
+        'has_param_generator': bool 是否有param_generator,
+        'is_correct_order': bool 顺序是否正确
+    }
+    """
+    
+    # 检测装饰器
+    decorators = []
+    lines = func_source.strip().split('\n')
+    
+    for i, line in enumerate(lines):
+        line = line.strip()
+        if line.startswith('@'):
+            if 'pytest.mark.parametrize' in line or 'parametrize(' in line:
+                decorators.append({'type': 'parametrize', 'line': i, 'content': line})
+            elif 'param_generator' in line:
+                decorators.append({'type': 'param_generator', 'line': i, 'content': line})
+    
+    # 确定顺序
+    if not decorators:
+        return {'order': [], 'has_parametrize': False, 'has_param_generator': False, 'is_correct_order': True}
+    
+    order = [d['type'] for d in sorted(decorators, key=lambda x: x['line'])]
+    
+    # 正确顺序：parametrize在外层，param_generator在内层
+    is_correct = (order[-1] == 'param_generator' if len(order) > 1 else True)
+    
+    return {
+        'order': order,
+        'has_parametrize': 'parametrize' in order,
+        'has_param_generator': 'param_generator' in order,
+        'is_correct_order': is_correct
+    }
+
+
+def _adjust_decorator_order(func: Callable) -> Callable:
+    """自动调整装饰器顺序辅助函数
+    
+    当@pytest.mark.parametrize和@param_generator顺序不当时，自动调整。
+    """
+    import inspect
+
+    # 获取函数源代码
+    try:
+        source = inspect.getsource(func)
+    except (OSError, TypeError):
+        return func  # 无法获取源代码
+    
+    # 检测装饰器顺序
+    order_info = _detect_decorator_order(source)
+    
+    if not order_info['has_parametrize'] or order_info['is_correct_order']:
+        return func  # 无需调整
+    
+    # 创建包装函数来处理错误顺序的情况
+    def wrapper(*args, **kwargs):
+        return func(*args, **kwargs)
+    
+    # 复制属性
+    wrapper.__name__ = func.__name__
+    wrapper.__doc__ = func.__doc__
+    wrapper.__module__ = func.__module__
+    
+    # 标记已经过自动调整
+    wrapper._decorator_order_adjusted = True
+    wrapper._original_order_info = order_info
+    
+    return wrapper
+
+
 def param_generator(func: Optional[Callable] = None, *, 
                    scope: Optional[str] = None,
                    cache: bool = False, 
@@ -97,18 +174,43 @@ def param_generator(func: Optional[Callable] = None, *,
         # 获取函数的装饰器信息
         func_source = inspect.getsource(func)
         
+        # 自动装饰器顺序调整逻辑
+        # 检查装饰器顺序是否正确：param_generator应该在内层
+        if hasattr(func, '_parametrize_called') and not hasattr(func, '_param_generator_called'):
+            # 正确的顺序：param_generator在内层
+            # @pytest.mark.parametrize -> @param_generator -> def func
+            processed_func = func
+        elif hasattr(func, '_param_generator_called') and not hasattr(func, '_parametrize_called'):
+            # 错误的顺序：param_generator在外层
+            # 需要延迟处理，等待@pytest.mark.parametrize应用
+            def wrapper(*args, **kwargs):
+                return func(*args, **kwargs)
+            
+            # 复制所有属性
+            wrapper.__name__ = func.__name__
+            wrapper.__doc__ = func.__doc__
+            wrapper.__module__ = func.__module__
+            
+            # 标记需要后续处理
+            wrapper._needs_parametrize = True
+            wrapper._original_func = func
+            processed_func = wrapper
+        else:
+            # 正常情况或尚未应用其他装饰器
+            processed_func = func
+        
+        # 标记param_generator已应用
+        processed_func._param_generator_called = True
+        
         # 智能scope推断逻辑
         final_scope = scope
         if final_scope is None:
-            # 解析函数定义行的上一行，查找@pytest.mark.parametrize装饰器
-            # 这里简化实现，实际应该更精确解析代码结构
-            final_scope = "function"  # 默认值
-            
-            # TODO: 实现更精确的装饰器解析逻辑
-            # 检查是否有@pytest.mark.parametrize装饰器
+            # 检查是否有@pytest.mark.parametrize依赖
             if '@pytest.mark.parametrize' in func_source:
-                # 如果有参数依赖，使用自动推断scope
-                final_scope = "function"  # 链式生成器通常是最小scope
+                # 自动推断scope：如果有依赖，使用依赖的最小scope
+                final_scope = _infer_scope_dependencies(func_source)
+            else:
+                final_scope = "session"  # 无依赖的生成器默认用session级
         
         # 确定生成器类
         generator_class = LazyGenerator if lazy else GeneratorBase

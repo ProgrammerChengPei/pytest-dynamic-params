@@ -1,7 +1,7 @@
 # Integration tests for parameter generator functionality
 
 import pytest
-from dynamic_params import param_generator, parametrize_test, parametrize_generator
+from dynamic_params import param_generator
 
 
 class TestBasicGenerator:
@@ -70,7 +70,7 @@ class TestGeneratorWithParametrization:
             for i in range(3):
                 yield i * 10
         
-        @parametrize_test("value", generate_test_values)
+        @pytest.mark.parametrize("value", generate_test_values)
         def test_values(value):
             assert value in [0, 10, 20]
             assert isinstance(value, int)
@@ -89,7 +89,7 @@ class TestGeneratorWithParametrization:
             yield "Bob"
             yield "Charlie"
         
-        @parametrize_test("name", generate_names)
+        @pytest.mark.parametrize("name", generate_names)
         def test_names(name):
             assert isinstance(name, str)
             assert len(name) > 0
@@ -153,8 +153,8 @@ class TestGeneratorParametrization:
     
     def test_parametrized_generator(self):
         """Test generator that is parametrized"""
-        @parametrize_generator("start, end", [[0, 5], [10, 15]])
         @param_generator
+        @pytest.mark.parametrize("start, end", [[0, 5], [10, 15]])
         def generate_range(start, end):
             """Generate range of numbers"""
             for i in range(start, end):
@@ -169,14 +169,14 @@ class TestGeneratorParametrization:
     
     def test_parametrized_generator_with_test(self):
         """Test using parametrized generator in test"""
-        @parametrize_generator("multiplier", [[2], [3]])
         @param_generator
+        @pytest.mark.parametrize("multiplier", [[2], [3]])
         def generate_multiples(multiplier):
             """Generate multiples"""
             for i in range(3):
                 yield i * multiplier
         
-        @parametrize_test("value", generate_multiples)
+        @pytest.mark.parametrize("value", generate_multiples)
         def test_multiples(value):
             assert isinstance(value, int)
         
@@ -293,8 +293,8 @@ class TestGeneratorCombinations:
             yield "a"
             yield "b"
         
-        @parametrize_test("num", generate_numbers)
-        @parametrize_test("letter", generate_letters)
+        @pytest.mark.parametrize("num", generate_numbers)
+        @pytest.mark.parametrize("letter", generate_letters)
         def test_combined(num, letter):
             assert num in [1, 2]
             assert letter in ["a", "b"]

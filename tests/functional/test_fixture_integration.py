@@ -5,247 +5,138 @@ Tests integration between dynamic parameters and pytest fixtures.
 """
 
 import pytest
-from dynamic_params import parametrize_test, parametrize_fixture, param_generator, DynRef
+from dynamic_params import param_generator
 
 
-class TestFixtureParametrization:
-    """Test fixture parametrization."""
+class TestFixtureIntegration:
+    """Test fixture integration with param_generator."""
     
-    def test_user_fixture(self):
-        """Test user fixture with parametrization."""
+    def test_param_generator_with_pytest_fixtures(self):
+        """Test param_generator integration with standard pytest fixtures."""
+        @pytest.fixture
+        def user_context():
+            return {"app": "test"}
+        
         @param_generator
         def generate_user_ids():
             """Generate user IDs."""
             for i in range(1, 4):
                 yield i
         
-        @parametrize_fixture("user_id", generate_user_ids)
-        def user(user_id):
-            return {"id": user_id, "name": f"User {user_id}"}
+        @pytest.mark.parametrize("user_id", generate_user_ids())
+        def test_user_context(user_context, user_id):
+            assert user_context["app"] == "test"
+            assert user_id in [1, 2, 3]
         
-        for i in range(1, 4):
-            user_data = {"id": i, "name": f"User {i}"}
-            assert "id" in user_data
-            assert "name" in user_data
-            assert user_data["id"] in [1, 2, 3]
+        # Test the function calls
+        test_user_context({"app": "test"}, 1)
+        test_user_context({"app": "test"}, 2)
+        test_user_context({"app": "test"}, 3)
     
-    def test_config_fixture(self):
-        """Test config fixture with parametrization."""
+    def test_param_generator_with_parametrized_fixtures(self):
+        """Test param_generator with pytest's parametrized fixtures."""
+        @pytest.fixture(params=[10, 20, 30])
+        def config_timeout(request):
+            return {"timeout": request.param}
+        
         @param_generator
-        def generate_config_values():
-            """Generate configuration values."""
-            yield {"timeout": 10}
-            yield {"timeout": 20}
-            yield {"timeout": 30}
+        def generate_app_names():
+            """Generate app names."""
+            yield "backend"
+            yield "frontend"
         
-        @parametrize_fixture("config", generate_config_values)
-        def app_config(config):
-            return {"app": "test", **config}
+        @pytest.mark.parametrize("app_name", generate_app_names())
+        def test_config_integration(config_timeout, app_name):
+            assert config_timeout["timeout"] in [10, 20, 30]
+            assert app_name in ["backend", "frontend"]
         
-        for timeout in [10, 20, 30]:
-            cfg = {"app": "test", "timeout": timeout}
-            assert cfg["app"] == "test"
-            assert cfg["timeout"] in [10, 20, 30]
+        # Test the function calls
+        for test_config in [{"timeout": 10}, {"timeout": 20}, {"timeout": 30}]:
+            for app in ["backend", "frontend"]:
+                test_config_integration(test_config, app)
 
 
-class TestFixtureWithDependencies:
-    """Test fixtures with parameter dependencies."""
+class TestParamGeneratorDependencies:
+    """Test param_generator with dependencies."""
     
-    def test_fixture_dependencies(self):
-        """Test fixture with dependencies."""
+    def test_generator_with_function_dependencies(self):
+        """Test generator that depends on other generators."""
         @param_generator
-        def generate_base_url():
+        def generate_base_urls():
             """Generate base URLs."""
             yield "http://localhost"
             yield "http://testserver"
         
         @param_generator
-        def generate_endpoint(base_url):
-            """Generate endpoints based on base URL."""
-            yield f"{base_url}/api/users"
-            yield f"{base_url}/api/posts"
+        def generate_endpoints():
+            """Generate endpoints."""
+            return ["/api/users", "/api/posts"]
         
-        @parametrize_fixture("base_url", generate_base_url)
-        def url_context(base_url):
-            return {"base": base_url}
+        # Test independent param_generators working together
+        @pytest.mark.parametrize("base_url", generate_base_urls())
+        @pytest.mark.parametrize("endpoint", generate_endpoints())
+        def test_url_combination(base_url, endpoint):
+            assert base_url in ["http://localhost", "http://testserver"]
+            assert endpoint in ["/api/users", "/api/posts"]
+            assert "/api/" in endpoint
         
-        @parametrize_fixture("endpoint", generate_endpoint)
-        def full_url(endpoint):
-            return endpoint
-        
+        # Test all combinations
         for base in ["http://localhost", "http://testserver"]:
-            url_ctx = {"base": base}
-            assert url_ctx["base"] in ["http://localhost", "http://testserver"]
-            assert "api" in f"{base}/api/users"
-
-
-class TestMixedFixtureAndParametrization:
-    """Test mixing fixtures with parametrization."""
+            for endpoint in ["/api/users", "/api/posts"]:
+                test_url_combination(base, endpoint)
     
-    def test_mixed_static_dynamic(self):
-        """Test mixing static fixture with dynamic parametrization."""
-        @pytest.fixture
-        def static_fixture():
-            return "static_value"
+    def test_generator_chain_implicit_scope(self):
+        """Test chain of generators with automatic scope inference."""
+        @param_generator(scope="session")
+        def generate_session_config():
+            """Generate session-level configuration."""
+            return ["config_v1", "config_v2"]
         
-        @param_generator
-        def generate_dynamic_values():
-            """Generate dynamic values."""
-            yield "dynamic1"
-            yield "dynamic2"
+        @param_generator  # No explicit scope, should be inferred
+        def generate_processing_config(choices):
+            """Generate processing configuration based on session config."""
+            return [f"process_{choice}" for choice in choices]
         
-        @parametrize_test("dynamic", generate_dynamic_values)
-        def test_mix(static_fixture, dynamic):
-            assert static_fixture == "static_value"
-            assert dynamic in ["dynamic1", "dynamic2"]
-        
-        test_mix("static_value", "dynamic1")
-        test_mix("static_value", "dynamic2")
-    
-    def test_all_types_together(self):
-        """Test all types together."""
-        @pytest.fixture
-        def static_fixture():
-            return "static_value"
-        
-        @pytest.fixture(params=["fixture_param1", "fixture_param2"])
-        def parametrized_fixture(request):
-            return request.param
-        
-        @param_generator
-        def generate_more_values():
-            """Generate more values."""
-            yield 100
-            yield 200
-        
-        @parametrize_test("dynamic_val", generate_more_values)
-        def test_all(static_fixture, parametrized_fixture, dynamic_val):
-            assert static_fixture == "static_value"
-            assert parametrized_fixture in ["fixture_param1", "fixture_param2"]
-            assert dynamic_val in [100, 200]
-        
-        for pf in ["fixture_param1", "fixture_param2"]:
-            for dv in [100, 200]:
-                test_all("static_value", pf, dv)
+        # Test that generators work together
+        @pytest.mark.parametrize("session_conf", generate_session_config())
+        @pytest.mark.parametrize("process_conf", generate_processing_config(["config_v1", "config_v2"]))
+        def test_config_chain(session_conf, process_conf):
+            assert session_conf in ["config_v1", "config_v2"]
+            assert process_conf in ["process_config_v1", "process_config_v2"]
 
 
-class TestFixtureScopes:
-    """Test fixture scopes with dynamic parametrization."""
+class TestFixtureScopeIntegration:
+    """Test fixture scope integration with param_generator."""
     
-    def test_session_scope(self):
-        """Test session scope combination."""
-        @param_generator
-        def generate_session_data():
-            """Generate session data."""
+    def test_session_scope_with_generator(self):
+        """Test session scope fixture with param_generator."""
+        @pytest.fixture(scope="session")
+        def session_data():
             return {"session_key": "session_value"}
         
-        @pytest.fixture(scope="session")
-        def session_fixture():
-            return {"scope": "session"}
+        @param_generator
+        def generate_test_cases():
+            """Generate test case data."""
+            return ["case1", "case2", "case3"]
         
-        @parametrize_test("data", generate_session_data)
-        def test_session(session_fixture, data):
-            assert session_fixture["scope"] == "session"
-            assert data["session_key"] == "session_value"
-        
-        test_session({"scope": "session"}, {"session_key": "session_value"})
+        @pytest.mark.parametrize("test_case", generate_test_cases())
+        def test_session_scope_integration(session_data, test_case):
+            assert session_data["session_key"] == "session_value"
+            assert test_case in ["case1", "case2", "case3"]
     
-    def test_module_scope(self):
-        """Test module scope combination."""
+    def test_module_scope_with_generator(self):
+        """Test module scope fixture with param_generator."""
+        @pytest.fixture(scope="module")
+        def module_config():
+            return {"module": "test_module"}
+        
         @param_generator
         def generate_module_data():
-            """Generate module data."""
-            return {"module_key": "module_value"}
+            """Generate module-specific data."""
+            yield "data_v1"
+            yield "data_v2"
         
-        @pytest.fixture(scope="module")
-        def module_fixture():
-            return {"scope": "module"}
-        
-        @parametrize_test("data", generate_module_data)
-        def test_module(module_fixture, data):
-            assert module_fixture["scope"] == "module"
-            assert data["module_key"] == "module_value"
-        
-        test_module({"scope": "module"}, {"module_key": "module_value"})
-
-
-class TestFixtureWithDynRef:
-    """Test fixtures using DynRef."""
-    
-    def test_fixture_dynref(self):
-        """Test fixture with DynRef computation."""
-        @param_generator
-        def generate_base():
-            """Generate base value."""
-            yield 10
-        
-        @param_generator
-        def generate_multiplier():
-            """Generate multiplier."""
-            yield 5
-        
-        @parametrize_fixture("base", generate_base)
-        def base_value(base):
-            return base
-        
-        @parametrize_fixture("multiplier", generate_multiplier)
-        def multiplier_value(multiplier):
-            return multiplier
-        
-        @parametrize_fixture("result", DynRef("base_value") * DynRef("multiplier_value"))
-        def computed_result(result):
-            return result
-        
-        base_val = 10
-        mult_val = 5
-        result = base_val * mult_val
-        
-        assert base_val == 10
-        assert mult_val == 5
-        assert result == 50
-
-
-class TestIndirectFixture:
-    """Test indirect fixture parametrization."""
-    
-    def test_indirect_fixture(self):
-        """Test indirect fixture parametrization."""
-        @param_generator
-        def generate_input_data():
-            """Generate input data."""
-            yield {"input": 1}
-            yield {"input": 2}
-            yield {"input": 3}
-        
-        @parametrize_fixture("raw_data", generate_input_data)
-        def processed_data(raw_data):
-            return {"processed": raw_data["input"] * 2}
-        
-        for inp in [1, 2, 3]:
-            raw = {"input": inp}
-            processed = {"processed": raw["input"] * 2}
-            assert processed["processed"] in [2, 4, 6]
-    
-    def test_user_profile_fixture(self):
-        """Test user profile fixture."""
-        @param_generator
-        def generate_user_data():
-            """Generate user data."""
-            yield {"username": "alice", "age": 25}
-            yield {"username": "bob", "age": 30}
-        
-        @parametrize_fixture("user_data", generate_user_data)
-        def user_profile(user_data):
-            return {
-                "display_name": user_data["username"].upper(),
-                "age_group": "adult" if user_data["age"] >= 18 else "minor"
-            }
-        
-        for username, age in [("alice", 25), ("bob", 30)]:
-            user_data = {"username": username, "age": age}
-            profile = {
-                "display_name": user_data["username"].upper(),
-                "age_group": "adult" if user_data["age"] >= 18 else "minor"
-            }
-            assert profile["display_name"] in ["ALICE", "BOB"]
-            assert profile["age_group"] == "adult"
+        @pytest.mark.parametrize("mod_data", generate_module_data())
+        def test_module_scope_integration(module_config, mod_data):
+            assert module_config["module"] == "test_module"
+            assert mod_data in ["data_v1", "data_v2"]

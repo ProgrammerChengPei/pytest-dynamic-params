@@ -1,7 +1,7 @@
 # Integration tests for basic parametrization functionality
 
 import pytest
-from dynamic_params import parametrize_test
+from dynamic_params import param_generator, parametrize_fixture
 
 
 class TestBasicParametrization:
@@ -9,7 +9,7 @@ class TestBasicParametrization:
     
     def test_simple_parametrization(self):
         """Test simple parametrization with direct values"""
-        @parametrize_test("a, b, expected", [
+        @pytest.mark.parametrize("a, b, expected", [
             [1, 2, 3],
             [4, 5, 9],
             [6, 7, 13],
@@ -26,7 +26,7 @@ class TestBasicParametrization:
     
     def test_string_parametrization(self):
         """Test parametrization with string values"""
-        @parametrize_test("name, greeting", [
+        @pytest.mark.parametrize("name, greeting", [
             ["Alice", "Hello, Alice!"],
             ["Bob", "Hello, Bob!"],
             ["Charlie", "Hello, Charlie!"]
@@ -41,7 +41,7 @@ class TestBasicParametrization:
     
     def test_boolean_parametrization(self):
         """Test parametrization with boolean values"""
-        @parametrize_test("value, expected", [
+        @pytest.mark.parametrize("value, expected", [
             [True, True],
             [False, False],
             [True and True, True],
@@ -58,7 +58,7 @@ class TestBasicParametrization:
     
     def test_list_parametrization(self):
         """Test parametrization with list values"""
-        @parametrize_test("input_list, expected_length", [
+        @pytest.mark.parametrize("input_list, expected_length", [
             [[1, 2, 3], 3],
             [[4, 5, 6, 7], 4],
             [[], 0],
@@ -75,7 +75,7 @@ class TestBasicParametrization:
     
     def test_dict_parametrization(self):
         """Test parametrization with dictionary values"""
-        @parametrize_test("input_dict, expected_keys", [
+        @pytest.mark.parametrize("input_dict, expected_keys", [
             [{"a": 1, "b": 2}, ["a", "b"]],
             [{"x": 10}, ["x"]],
             [{}, []]
@@ -90,8 +90,8 @@ class TestBasicParametrization:
     
     def test_multiple_parametrization_decorators(self):
         """Test multiple parametrization decorators on same function"""
-        @parametrize_test("a", [1, 2, 3])
-        @parametrize_test("b", [10, 20])
+        @pytest.mark.parametrize("a", [1, 2, 3])
+        @pytest.mark.parametrize("b", [10, 20])
         def test_multiply(a, b):
             result = a * b
             assert result > 0
@@ -103,7 +103,7 @@ class TestBasicParametrization:
     
     def test_parametrization_with_ids(self):
         """Test parametrization with custom IDs"""
-        @parametrize_test("value, expected", [
+        @pytest.mark.parametrize("value, expected", [
             [1, 2],
             [2, 4],
             [3, 6]
@@ -118,7 +118,7 @@ class TestBasicParametrization:
     
     def test_parametrization_edge_cases(self):
         """Test parametrization with edge cases"""
-        @parametrize_test("value, expected", [
+        @pytest.mark.parametrize("value, expected", [
             [0, 0],
             [-1, -1],
             [1000000, 1000000],
@@ -139,7 +139,7 @@ class TestParametrizationTypes:
     
     def test_numeric_types(self):
         """Test parametrization with numeric types"""
-        @parametrize_test("value, expected_type", [
+        @pytest.mark.parametrize("value, expected_type", [
             [1, int],
             [3.14, float],
             [2+3j, complex]
@@ -154,7 +154,7 @@ class TestParametrizationTypes:
     
     def test_mixed_types(self):
         """Test parametrization with mixed types"""
-        @parametrize_test("value", [
+        @pytest.mark.parametrize("value", [
             1,
             "string",
             [1, 2, 3],
@@ -177,7 +177,7 @@ class TestParametrizationMarkers:
     
     def test_marker_applied(self):
         """Test that the dynamic_parametrize decorator is applied"""
-        @parametrize_test("x", [1, 2, 3])
+        @pytest.mark.parametrize("x", [1, 2, 3])
         def test_func(x):
             pass
         
@@ -187,7 +187,7 @@ class TestParametrizationMarkers:
     
     def test_marker_contains_correct_data(self):
         """Test that the decorator contains correct parametrization data"""
-        @parametrize_test("a, b", [[1, 2], [3, 4]])
+        @pytest.mark.parametrize("a, b", [[1, 2], [3, 4]])
         def test_func(a, b):
             pass
         

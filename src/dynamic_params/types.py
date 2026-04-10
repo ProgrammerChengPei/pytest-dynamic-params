@@ -1,15 +1,7 @@
 # Type definitions for pytest-dynamic-params
 
-from typing import (
-    Any,
-    Callable,
-    Dict,
-    List,
-    Optional,
-    TypeVar,
-    Union,
-    Generator as GeneratorType,
-)
+from typing import Any, Callable, Dict, List, TypeVar, Union
+from typing import Generator as GeneratorType
 
 # Type variables
 T = TypeVar('T')
@@ -18,7 +10,7 @@ T = TypeVar('T')
 GeneratorFunc = Callable[..., Union[List[Any], GeneratorType[Any, None, None]]]
 
 # Parameter value type
-ParamValue = Union[Any, 'DynRef']
+ParamValue = Any
 
 # Parameter values type
 ParamValues = List[List[ParamValue]]

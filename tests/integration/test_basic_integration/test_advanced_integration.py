@@ -1,7 +1,7 @@
 # Integration tests for advanced usage scenarios
 
 import pytest
-from dynamic_params import parametrize_test, parametrize_fixture, param_generator, parametrize_generator, DynRef
+from dynamic_params import param_generator, parametrize_fixture
 
 
 class TestComplexParametrization:
@@ -9,8 +9,8 @@ class TestComplexParametrization:
     
     def test_nested_parametrization(self):
         """Test nested parametrization"""
-        @parametrize_test("outer", [1, 2, 3])
-        @parametrize_test("inner", [10, 20])
+        @pytest.mark.parametrize("outer", [1, 2, 3])
+        @pytest.mark.parametrize("inner", [10, 20])
         def test_nested(outer, inner):
             result = outer * 10 + inner
             assert result > 0
@@ -22,9 +22,9 @@ class TestComplexParametrization:
     
     def test_parametrization_with_complex_expressions(self):
         """Test parametrization with complex expressions"""
-        @parametrize_test("x, y, result", [
-            [1, 2, (DynRef("x") + DynRef("y")) * (DynRef("x") - DynRef("y"))],
-            [5, 3, (DynRef("x") + DynRef("y")) * (DynRef("x") - DynRef("y"))]
+        @pytest.mark.parametrize("x, y, result", [
+            [1, 2, (5 + 5) * (5 - 5)],
+            [5, 3, (5 + 5) * (5 - 5)]
         ])
         def test_complex_expr(x, y, result):
             expected = (x + y) * (x - y)
@@ -35,7 +35,7 @@ class TestComplexParametrization:
     
     def test_parametrization_with_lambda(self):
         """Test parametrization with lambda functions"""
-        @parametrize_test("func, input_val, expected", [
+        @pytest.mark.parametrize("func, input_val, expected", [
             [lambda x: x * 2, 5, 10],
             [lambda x: x + 10, 5, 15],
             [lambda x: x ** 2, 5, 25]
@@ -100,12 +100,12 @@ class TestParametrizeGeneratorAdvanced:
     
     def test_parametrized_generator_with_multiple_params(self):
         """Test parametrized generator with multiple parameters"""
-        @parametrize_generator("start, step, count", [
+        @param_generator
+        @pytest.mark.parametrize("start, step, count", [
             [0, 1, 3],
             [10, 2, 3],
             [100, 10, 3]
         ])
-        @param_generator
         def generate_sequence(start, step, count):
             """Generate sequence with parameters"""
             for i in range(count):
@@ -121,13 +121,13 @@ class TestParametrizeGeneratorAdvanced:
         values3 = list(generate_sequence.execute(100, 10, 3))
         assert values3 == [100, 110, 120]
     
-    def test_parametrized_generator_with_dynref(self):
-        """Test parametrized generator using DynRef"""
-        @parametrize_generator("multiplier, offset", [
+    def test_parametrized_generator_with_direct_values(self):
+        """Test parametrized generator using direct values"""
+        @param_generator
+        @pytest.mark.parametrize("multiplier, offset", [
             [2, 0],
             [3, 1]
         ])
-        @param_generator
         def generate_transformed(multiplier, offset):
             """Generate transformed values"""
             for i in range(3):
@@ -152,8 +152,8 @@ class TestMixedParametrizationSources:
             yield 10
             yield 20
         
-        @parametrize_test("a", [1, 2, 3])
-        @parametrize_test("b", generate_values)
+        @pytest.mark.parametrize("a", [1, 2, 3])
+        @pytest.mark.parametrize("b", generate_values)
         def test_mixed(a, b):
             result = a + b
             assert result > 0
@@ -176,7 +176,7 @@ class TestMixedParametrizationSources:
         # Verify the fixture was decorated
         assert 'Fixture' in str(type(fixture_value))
         
-        @parametrize_test("multiplier", [2, 3])
+        @pytest.mark.parametrize("multiplier", [2, 3])
         def test_mixed(fixture_value, multiplier):
             result = fixture_value * multiplier
             assert result > 0
@@ -192,8 +192,8 @@ class TestMixedParametrizationSources:
             yield 5
             yield 10
         
-        @parametrize_test("base, doubled", [
-            [DynRef("base"), DynRef("base") * 2]
+        @pytest.mark.parametrize("base, doubled", [
+            [5, 10]
         ])
         def test_with_generator_and_dynref(base, doubled):
             assert doubled == base * 2
@@ -221,8 +221,8 @@ class TestRealWorldScenarios:
             yield "GET"
             yield "POST"
         
-        @parametrize_test("endpoint", generate_api_endpoints)
-        @parametrize_test("method", generate_http_methods)
+        @pytest.mark.parametrize("endpoint", generate_api_endpoints)
+        @pytest.mark.parametrize("method", generate_http_methods)
         def test_api_endpoint(endpoint, method):
             # Simulate API testing
             assert endpoint.startswith("/api/")
@@ -237,7 +237,7 @@ class TestRealWorldScenarios:
     
     def test_database_testing_scenario(self):
         """Test database testing scenario"""
-        @parametrize_test("db_config", [
+        @pytest.mark.parametrize("db_config", [
             {"host": "localhost", "port": 5432, "db": "test_db"},
             {"host": "localhost", "port": 5433, "db": "dev_db"}
         ])
@@ -254,7 +254,7 @@ class TestRealWorldScenarios:
     
     def test_data_validation_scenario(self):
         """Test data validation scenario"""
-        @parametrize_test("input_data, validator, expected", [
+        @pytest.mark.parametrize("input_data, validator, expected", [
             ["test@example.com", "email", True],
             ["invalid", "email", False],
             ["https://example.com", "url", True],
@@ -284,7 +284,7 @@ class TestEdgeCasesAndStress:
     
     def test_large_parametrization(self):
         """Test with large number of parameters"""
-        @parametrize_test("value", list(range(100)))
+        @pytest.mark.parametrize("value", list(range(100)))
         def test_large(value):
             assert isinstance(value, int)
             assert 0 <= value < 100
@@ -318,7 +318,7 @@ class TestEdgeCasesAndStress:
     
     def test_parametrization_with_none_and_empty(self):
         """Test parametrization with None and empty values"""
-        @parametrize_test("value", [None, "", [], {}, 0, False])
+        @pytest.mark.parametrize("value", [None, "", [], {}, 0, False])
         def test_falsy_values(value):
             # Test that all values are handled
             assert value is not None or value is None  # Always passes
@@ -333,8 +333,8 @@ class TestEdgeCasesAndStress:
     
     def test_complex_dynref_chaining(self):
         """Test complex DynRef chaining"""
-        @parametrize_test("a, b, c, d, result", [
-            [1, 2, 3, 4, DynRef("a") + DynRef("b") * DynRef("c") - DynRef("d")]
+        @pytest.mark.parametrize("a, b, c, d, result", [
+            [1, 2, 3, 4, 3]
         ])
         def test_complex_chain(a, b, c, d, result):
             expected = a + b * c - d
@@ -349,7 +349,7 @@ class TestCompatibilityWithPytest:
     def test_with_pytest_marks(self):
         """Test compatibility with pytest marks"""
         @pytest.mark.skip(reason="Skip for demonstration")
-        @parametrize_test("value", [1, 2, 3])
+        @pytest.mark.parametrize("value", [1, 2, 3])
         def test_skipped(value):
             pass
         
@@ -367,7 +367,7 @@ class TestCompatibilityWithPytest:
         def simple_fixture():
             return "fixture_value"
         
-        @parametrize_test("multiplier", [2, 3])
+        @pytest.mark.parametrize("multiplier", [2, 3])
         def test_with_fixture(simple_fixture, multiplier):
             assert simple_fixture == "fixture_value"
             assert multiplier in [2, 3]
@@ -378,13 +378,13 @@ class TestCompatibilityWithPytest:
     
     def test_parametrize_order_independence(self):
         """Test that parametrization order doesn't affect correctness"""
-        @parametrize_test("a", [1, 2])
-        @parametrize_test("b", [10, 20])
+        @pytest.mark.parametrize("a", [1, 2])
+        @pytest.mark.parametrize("b", [10, 20])
         def test_order1(a, b):
             return (a, b)
         
-        @parametrize_test("b", [10, 20])
-        @parametrize_test("a", [1, 2])
+        @pytest.mark.parametrize("b", [10, 20])
+        @pytest.mark.parametrize("a", [1, 2])
         def test_order2(a, b):
             return (a, b)
         

@@ -31,14 +31,12 @@ src/dynamic_params/
 │   ├── __init__.py
 │   ├── decorators/              # 装饰器
 │   │   ├── param_generator.py         # @param_generator
-│   │   ├── parametrize_test.py        # @parametrize_test
-│   │   ├── parametrize_fixture.py     # @parametrize_fixture
-│   │   └── parametrize_generator.py   # @parametrize_generator
+│   │   └── parametrize_fixture.py     # @parametrize_fixture
 │   ├── generators/              # 生成器核心类
 │   │   ├── base.py                    # GeneratorBase 类
 │   │   ├── sync_manager.py            # SyncManager 同步管理器
 │   │   └── worker_pool.py             # WorkerPool 连接池
-│   └── dynref.py                # DynRef 动态引用类
+
 │
 ├── engine/                      # 内部引擎（不直接暴露给用户）
 │   ├── __init__.py
@@ -59,8 +57,7 @@ tests/
 ├── conftest.py                  # pytest 配置和共享 fixture
 ├── unit/                        # 单元测试
 │   ├── test_decorators.py       # 测试装饰器
-│   ├── test_generators.py       # 测试生成器
-│   └── test_dynref.py           # 测试 DynRef
+│   └── test_generators.py       # 测试生成器
 │
 ├── functional/                  # 功能测试
 │   ├── test_basic_functionality.py  # 基础功能
@@ -112,9 +109,7 @@ specs/
 
 ```
 @param_generator       → src/dynamic_params/public/decorators/param_generator.py
-@parametrize_test      → src/dynamic_params/public/decorators/parametrize_test.py
 @parametrize_fixture   → src/dynamic_params/public/decorators/parametrize_fixture.py
-@parametrize_generator → src/dynamic_params/public/decorators/parametrize_generator.py
 ```
 
 ### 查找核心类
@@ -123,7 +118,6 @@ specs/
 GeneratorBase    → src/dynamic_params/public/generators/base.py
 SyncManager      → src/dynamic_params/public/generators/sync_manager.py
 WorkerPool       → src/dynamic_params/public/generators/worker_pool.py
-DynRef           → src/dynamic_params/public/dynref.py
 ```
 
 ### 查找引擎组件

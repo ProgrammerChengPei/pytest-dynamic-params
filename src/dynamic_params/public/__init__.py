@@ -1,17 +1,9 @@
 """公共接口模块"""
 
-from .api import (
-    parametrize_test,
-    parametrize_fixture,
-    parametrize_generator,
-    param_generator,
-    DynRef,
-)
+from .decorators.param_generator import param_generator
+from .decorators.parametrize_fixture import parametrize_fixture
 
 __all__ = [
-    "parametrize_test",
     "parametrize_fixture",
-    "parametrize_generator",
     "param_generator",
-    "DynRef",
 ]

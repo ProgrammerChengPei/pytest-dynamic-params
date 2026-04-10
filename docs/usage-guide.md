@@ -2,7 +2,7 @@
 
 ## 概述
 
-`pytest-dynamic-params` 是一个用于pytest的动态参数化插件，允许测试开发者声明式地定义参数生成器，系统自动处理参数收集、依赖解析、动态参数生成和测试用例参数化。
+`pytest-dynamic-params` 是一个用于pytest的动态参数化插件，支持声明式地定义参数生成器，系统自动处理参数收集、依赖解析、动态参数生成和测试用例参数化。
 
 ## 安装
 
@@ -20,408 +20,245 @@ pip install -e .
 
 ## 核心概念
 
-### 1. 参数生成器 (`@generator`)
+### 1. 参数化fixture装饰器 (`@parametrize_fixture`)
 
-使用 `@generator` 装饰器定义的函数，用于动态生成参数值。支持配置作用域、缓存和懒加载。
+使用 `@parametrize_fixture` 装饰器对fixture进行参数化，支持定义参数化fixture。参数名称有特殊处理规则，支持灵活的参数定义。
 
-### 2. 动态参数装饰器 (`@use_generators`)
+### 2. 链式参数生成器 (`@param_generator`)
 
-使用 `@use_generators` 装饰器将参数生成器与测试函数关联起来，支持多个动态参数。
+使用 `@param_generator` 装饰器定义链式参数生成器，支持 A→B→C 的真实依赖传递关系。基于参数名严格匹配实现自动依赖解析。
 
-### 3. 动态参数化装饰器 (`@dynamic_parametrize`)
+### 3. 链式依赖解析机制
 
-使用 `@dynamic_parametrize` 装饰器参数化测试函数，类似于 pytest 的 `@pytest.mark.parametrize`，但支持动态解析参数值和引用 fixture。
+系统自动分析生成器函数的参数签名，根据参数名精确匹配来确定依赖关系，支持复杂的链式依赖。
 
-### 4. 引用对象 (`DynRef`)
+### 4. Scope自动推断
 
-使用 `DynRef` 类创建对参数或 fixture 的引用，用于在 `@dynamic_parametrize` 中动态解析值。
+根据依赖生成器的最小scope自动确定生成器的scope，无需手动配置。
 
-### 5. 作用域管理
+### 5. 与原生pytest无缝集成
 
-支持四种作用域：`function`（默认）、`class`、`module`、`session`，控制参数生成的生命周期。
+完全兼容pytest原生功能，支持与 `@pytest.mark.parametrize`、`@pytest.fixture` 等装饰器混合使用。
 
-### 6. 依赖解析
+## 基本用法
 
-系统自动分析生成器函数的参数签名，确定依赖关系并按正确顺序执行，支持复杂的依赖链。
-
-### 7. 懒加载
-
-通过 `lazy` 参数控制是否启用懒加载，避免不必要的参数生成，提高性能。
-
-### 8. 缓存机制
-
-通过 `cache` 参数控制是否启用缓存，对于计算密集型的参数生成可以显著提高性能。
-
-## 装饰器1：`@generator` 装饰器
-
-### 基本功能
-
-`@generator` 装饰器用于定义参数生成器函数，这些函数可以动态生成测试参数值。生成器函数可以接受参数，这些参数可以是普通值、fixture 或其他生成器的返回值。
-
-### 基本用法
+### 单级参数生成器使用
 
 ```python
-from dynamic_params import generator
+from dynamic_params import param_generator
+import pytest
 
-@generator
+@param_generator
 def calculate_result(input_value):
-    """计算结果生成器
-
-    Args:
-        input_value: 输入值
-
-    Returns:
-        计算结果
-    """
-    return input_value * 2
-```
-
-### 高级配置
-
-#### 作用域控制
-
-```python
-import random
-
-@generator(scope="function")  # 每个测试函数重新生成
-def function_scoped_data():
-    """函数作用域数据生成器
-
-    每个测试函数执行时都会重新生成
-    """
-    return random.randint(1, 100)
-
-@generator(scope="class")     # 每个测试类共享
-def class_scoped_data():
-    """类作用域数据生成器
-
-    每个测试类只生成一次，类内所有测试共享
-    """
-    return "shared among class"
-
-@generator(scope="module")    # 每个模块共享
-def module_scoped_data():
-    """模块作用域数据生成器
-
-    每个模块只生成一次，模块内所有测试共享
-    """
-    return "shared among module"
-
-@generator(scope="session")   # 整个测试会话共享
-def session_scoped_data():
-    """会话作用域数据生成器
-
-    整个测试会话只生成一次，所有测试共享
-    """
-    return "shared across session"
-```
-
-#### 缓存控制
-
-```python
-@generator(cache=True)  # 启用缓存（默认）
-def cached_data(input_value):
-    """启用缓存的数据生成器
-
-    对于相同的输入值，会缓存结果，提高性能
-    """
-    # 计算密集型操作
-    return expensive_computation(input_value)
-
-@generator(cache=False)  # 禁用缓存
-def uncached_data():
-    """禁用缓存的数据生成器
-
-    每次调用都会重新生成，适合返回时间相关的值
-    """
-    return time.time()  # 每次调用返回不同值
-```
-
-#### 懒加载控制
-
-```python
-def compute_expensive_value(input_value):
-    """模拟计算密集型操作"""
-    print(f"Computing value for {input_value}")
-    return input_value * 10
-
-@generator(lazy=True)  # 启用懒加载（默认）
-def lazy_data(input_value):
-    """启用懒加载的数据生成器
-
-    只有在实际使用时才会执行，避免不必要的计算
-    """
-    return compute_expensive_value(input_value)
-
-@generator(lazy=False)  # 禁用懒加载
-def eager_data(input_value):
-    """禁用懒加载的数据生成器
-
-    会立即执行，不管是否使用，适合需要提前计算的场景
-    """
-    return compute_expensive_value(input_value)
-```
-
-### 错误处理
-
-#### 循环依赖检测
-
-```python
-# 这将触发循环依赖错误
-@generator
-def generate_a(b_value):  # 依赖于b
-    return f"A_based_on_{b_value}"
-
-@generator 
-def generate_b(a_value):  # 依赖于a - 循环依赖！
-    return f"B_based_on_{a_value}"
-
-@use_generators(a=generate_a, b=generate_b)
-def test_will_fail(a, b):  # 这个测试将失败，因为存在循环依赖
-    pass
-```
-
-#### 缺失参数错误
-
-如果参数生成器需要的参数在测试环境中不可用，插件会抛出 `MissingParameterError` 并提供详细的错误信息。
-
-#### 执行错误
-
-如果参数生成器执行过程中发生异常，插件会抛出 `ExecutionError` 并包含原始异常信息和调用上下文。
-
-## 装饰器2：`@use_generators` 装饰器
-
-### 基本功能
-
-`@use_generators` 装饰器用于将参数生成器与测试函数关联起来，支持多个动态参数。它会自动解析生成器之间的依赖关系，并按正确的顺序执行生成器。
-
-### 基本用法
-
-```python
-from dynamic_params import generator, use_generators
-
-@generator
-def calculate_result(input_value):
+    """基于输入值计算结果"""
     return input_value * 2
 
-@use_generators(result=calculate_result)
-def test_basic(input_value, result):
-    assert result == input_value * 2
+@pytest.mark.parametrize("input_value", [1, 2, 3])
+def test_basic_dependency(input_value, calculate_result):
+    """基础依赖测试：calculate_result自动依赖于input_value"""
+    assert calculate_result == input_value * 2
 ```
 
-### 高级用法
-
-#### 多个动态参数
+### 链式依赖示例
 
 ```python
-def apply_algorithm(item, algorithm):
-    """应用算法处理数据"""
-    if algorithm == "algo1":
-        return {**item, "processed": item["id"] * 2}
-    else:
-        return {**item, "processed": item["id"] * 3}
+from dynamic_params import param_generator
+import pytest
 
-@generator
-def get_raw_data(data_source, size):
-    """获取原始数据"""
-    return [{"id": i, "source": data_source} for i in range(size)]
-
-@generator
-def process_data(raw_data, algorithm):
-    """处理原始数据"""
-    return [apply_algorithm(item, algorithm) for item in raw_data]
-
-@use_generators(
-    raw_data=get_raw_data,
-    processed_data=process_data
-)
-@pytest.mark.parametrize("data_source", ["api", "database"])
-@pytest.mark.parametrize("size", [5, 10])
-@pytest.mark.parametrize("algorithm", ["algo1", "algo2"])
-def test_multiple_use_generators(
-    data_source, size, algorithm,
-    raw_data, processed_data
-):
-    assert len(raw_data) == size
-    assert len(processed_data) == size
-```
-
-#### 与fixture混合使用
-
-##### 1. Generator中使用Fixture
-
-```python
-@pytest.fixture
-def database():
-    # 数据库连接逻辑
-    return {"users": {"admin": {"type": "admin"}, "user": {"type": "user"}}}
-
-@generator
-def get_user_data(database, user_type):
+@param_generator  
+def get_user_data(user_id):
     """获取用户数据"""
-    return database["users"].get(user_type, {"type": "unknown"})
+    return {"id": user_id, "name": f"user_{user_id}"}
 
-@use_generators(user_data=get_user_data)
-@pytest.mark.parametrize("user_type", ["admin", "user"])
-def test_with_fixture(database, user_type, user_data):
-    assert user_data["type"] == user_type
+@param_generator
+def calculate_user_stats(user_data, stat_type):
+    """计算用户统计信息，依赖于用户数据"""
+    if stat_type == "age":
+        return user_data["id"] * 10
+    elif stat_type == "score":
+        return user_data["id"] * 100
+
+@pytest.mark.parametrize("user_id", [1, 2, 3])
+@pytest.mark.parametrize("stat_type", ["age", "score"])
+def test_chain_dependencies(user_id, stat_type, get_user_data, calculate_user_stats):
+    """链式依赖测试：calculate_user_stats依赖于get_user_data"""
+    assert get_user_data["id"] == user_id
+    assert calculate_user_stats > 0
 ```
 
-##### 2. Fixture中使用Generator
+### 与fixture结合使用
 
 ```python
-from dynamic_params import generator, use_generators
+from dynamic_params import param_generator
 import pytest
 
 @pytest.fixture
 def base_config():
+    """基础配置fixture"""
     return {"base": "config"}
 
-@generator
-def generate_env_config(base_config, environment):
-    # 动态生成依赖其他fixture的fixture值
-    return {**base_config, "env": environment}
-
-# 可以将动态参数用作其他测试的fixture
-@pytest.fixture
-def env_config(generate_env_config):
-    return generate_env_config
-
-@use_generators(env_config=generate_env_config)
-@pytest.mark.parametrize("environment", ["dev", "test", "prod"])
-def test_fixture_parameterization(environment, env_config):
-    assert env_config["env"] == environment
-    assert env_config["base"] == "config"
-
-# 在其他测试中使用env_config fixture
-def test_using_parametrized_fixture(env_config):
-    assert "env" in env_config
-    assert "base" in env_config
-```
-
-#### 与 `@dynamic_parametrize` 结合使用
-
-##### 1. 基本结合使用
-
-```python
-from dynamic_params import generator, use_generators, dynamic_parametrize, DynRef
-
-@pytest.fixture
-def base_config():
-    return {"base": "config"}
-
-@generator
-def generate_env_config(base_config, environment):
-    """生成环境配置"""
-    return {**base_config, "env": environment}
-
-@use_generators(env_config=generate_env_config)
-@dynamic_parametrize(
-    "environment, expected_env",
-    [
-        ("dev", "dev"),
-        ("test", "test"),
-        ("prod", "prod")
-    ]
-)
-def test_combined_decorators(environment, expected_env, env_config):
-    assert env_config["env"] == expected_env
-    assert env_config["base"] == "config"
-```
-
-##### 2. 与 DynRef 结合的高级示例
-
-```python
-from dynamic_params import generator, use_generators, dynamic_parametrize, DynRef
-
-@pytest.fixture
+@pytest.fixture 
 def api_url():
+    """API URL fixture"""
     return "http://api.example.com"
 
+@param_generator
+def generate_env_config(base_config, environment):
+    """基于基础配置和环境生成环境配置"""
+    return {**base_config, "env": environment}
+
+@param_generator
+def generate_api_endpoint(api_url, resource, method):
+    """生成完整API端点信息"""
+    return {
+        "endpoint": f"{api_url}/{resource}",
+        "method": method,
+        "url": api_url
+    }
+
+@pytest.mark.parametrize("environment", ["dev", "test", "prod"])
+@pytest.mark.parametrize("resource", ["users", "products"])
+@pytest.mark.parametrize("method", ["GET", "POST"])
+def test_fixture_and_generator_integration(
+    base_config, api_url, environment, resource, method,
+    generate_env_config, generate_api_endpoint
+):
+    """fixture与参数生成器集成测试"""
+    assert generate_env_config["base"] == "config"
+    assert generate_env_config["env"] == environment
+    assert generate_api_endpoint["method"] == method
+    assert resource in generate_api_endpoint["endpoint"]
+```
+
+## 高级链式依赖示例
+
+### 多级依赖关系
+
+```python
+from dynamic_params import param_generator
+import pytest
+
+@param_generator
+def get_product_info(product_id):
+    """获取产品基本信息"""
+    return {"id": product_id, "name": f"Product_{product_id}"}
+
+@param_generator
+def calculate_product_price(product_info, discount_rate):
+    """计算产品价格，依赖于产品信息"""
+    base_price = product_info["id"] * 100
+    return base_price * (1 - discount_rate)
+
+@param_generator
+def check_product_availability(product_info, price, warehouse_id):
+    """检查产品可用性，依赖于产品信息和价格"""
+    return {
+        "product": product_info["name"],
+        "price": price,
+        "available": price > 0 and warehouse_id > 0
+    }
+
+@pytest.mark.parametrize("product_id", [1, 2, 3])
+@pytest.mark.parametrize("discount_rate", [0.0, 0.1, 0.2])
+@pytest.mark.parametrize("warehouse_id", [1, 2])
+def test_multi_level_chain(
+    product_id, discount_rate, warehouse_id,
+    get_product_info, calculate_product_price, check_product_availability
+):
+    """三级链式依赖测试：product_id → product_info → price → availability"""
+    assert get_product_info["id"] == product_id
+    assert calculate_product_price > 0
+    assert "available" in check_product_availability
+    assert isinstance(check_product_availability["available"], bool)
+```
+
+### 复杂业务场景示例
+
+```python
+from dynamic_params import param_generator
+import pytest
+
 @pytest.fixture
-def default_method():
-    return "GET"
+def user_session():
+    """模拟用户会话"""
+    return {"user_id": 123, "logged_in": True}
 
-@generator
-def generate_endpoint(api_url, resource, method):
-    """生成API端点"""
-    return f"{api_url}/{resource}", method
+@param_generator
+def get_user_permissions(user_session, permission_level):
+    """获取用户权限，依赖于用户会话"""
+    return {
+        "user_id": user_session["user_id"],
+        "can_read": permission_level in ["read", "write"],
+        "can_write": permission_level == "write"
+    }
 
-@use_generators(endpoint_and_method=generate_endpoint)
-@dynamic_parametrize(
-    "resource, method",
-    [
-        ("users", DynRef("default_method")),
-        ("products", "POST"),
-        ("orders", "PUT")
-    ]
-)
-def test_api_endpoints(resource, method, endpoint_and_method, api_url):
-    endpoint, used_method = endpoint_and_method
-    assert endpoint == f"{api_url}/{resource}"
-    assert used_method == method
-    assert method in ["GET", "POST", "PUT"]
+@param_generator
+def access_secured_resource(user_permissions, resource_id):
+    """访问受保护资源，依赖于用户权限"""
+    return {
+        "resource_id": resource_id,
+        "accessible": user_permissions["can_read"],
+        "writable": user_permissions["can_write"]
+    }
+
+@pytest.mark.parametrize("permission_level", ["read", "write", "none"])
+@pytest.mark.parametrize("resource_id", ["doc1", "doc2", "config"])
+def test_security_workflow(
+    user_session, permission_level, resource_id,
+    get_user_permissions, access_secured_resource
+):
+    """安全流程测试：用户会话→权限检查→资源访问"""
+    assert user_session["logged_in"] is True
+    assert get_user_permissions["user_id"] == user_session["user_id"]
+    
+    if permission_level == "none":
+        assert not access_secured_resource["accessible"]
+    else:
+        assert access_secured_resource["accessible"]
+        if permission_level == "write":
+            assert access_secured_resource["writable"]
+        else:
+            assert not access_secured_resource["writable"]
 ```
 
-## 装饰器3：`@dynamic_parametrize` 装饰器
-
-### 基本功能
-
-`@dynamic_parametrize` 装饰器用于参数化测试函数，类似于 pytest 的 `@pytest.mark.parametrize`，但支持动态解析参数值和引用 fixture。
-
-### 基本用法
+### 参数化fixture使用示例
 
 ```python
-from dynamic_params import dynamic_parametrize
+from dynamic_params import parametrize_fixture, param_generator
+import pytest
 
-@dynamic_parametrize(
-    "input_value, expected_result",
-    [
-        (1, 1),
-        (2, 2),
-        (3, 3)
-    ]
-)
-def test_basic_dynamic_parametrize(input_value, expected_result):
-    assert input_value == expected_result
+@parametrize_fixture
+@pytest.mark.parametrize("env_type", ["dev", "test", "prod"])
+def environment_config(env_type):
+    """参数化环境配置fixture"""
+    configs = {
+        "dev": {"debug": True, "timeout": 30},
+        "test": {"debug": True, "timeout": 60}, 
+        "prod": {"debug": False, "timeout": 120}
+    }
+    return configs[env_type]
+
+@param_generator
+def generate_service_config(environment_config, service_name):
+    """生成服务配置，依赖环境配置"""
+    return {
+        "service": service_name,
+        "debug": environment_config["debug"],
+        "timeout": environment_config["timeout"]
+    }
+
+@pytest.mark.parametrize("service_name", ["api", "db", "cache"])
+def test_parametrized_fixture_with_generator(
+    env_type, service_name, environment_config, generate_service_config
+):
+    """参数化fixture与链式生成器结合使用"""
+    assert isinstance(environment_config, dict)
+    assert "debug" in environment_config
+    assert generate_service_config["service"] == service_name
+    assert generate_service_config["debug"] == environment_config["debug"]
 ```
 
-### 高级用法
-
-#### 与 `DynRef` 结合使用
-
-```python
-from dynamic_params import dynamic_parametrize, DynRef
-
-@pytest.fixture
-def base_value():
-    return 10
-
-@dynamic_parametrize(
-    "param1, param2",
-    [
-        (1, 2),
-        (DynRef("base_value"), DynRef("base_value"))
-    ]
-)
-def test_with_dynref(param1, param2):
-    assert isinstance(param1, (int, float))
-    assert isinstance(param2, (int, float))
-```
-
-#### 与其他装饰器结合
-
-```python
-@dynamic_parametrize(
-    "input_value",
-    [1, 2, 3]
-)
-@pytest.mark.parametrize("multiplier", [2, 3])
-def test_combined_parametrize(input_value, multiplier):
-    assert input_value * multiplier > 0
-```
-
-## 配置
+## 参数生成器行为配置
 
 ### 配置文件配置
 
@@ -446,21 +283,22 @@ incremental_generation = true
 
 # 测试标记
 markers =
-    use_generators: 使用动态参数的测试
-    generator: 参数生成器函数
+    param_generator: 参数生成器函数
+    parametrize_fixture: 参数化fixture
 ```
 
 ## 最佳实践
 
 1. **保持生成器函数纯净**：生成器函数应该只负责生成参数值，不要有副作用。
-2. **合理使用作用域**：根据测试需求选择合适的作用域，避免不必要的重复计算。
-3. **明确依赖关系**：确保生成器函数的参数签名清晰地表达依赖关系。
+2. **合理使用作用域**：系统会根据依赖链自动推断scope，但可通过配置进行优化。
+3. **明确依赖关系**：确保生成器函数的参数签名清晰地表达依赖关系，名称匹配是关键。
 4. **启用缓存**：对于计算密集型的参数生成，启用缓存可以显著提高性能。
 5. **使用懒加载**：对于可能不被使用的参数，启用懒加载可以避免不必要的计算。
-6. **使用有意义的参数名**：使用描述性的参数名有助于理解测试逻辑。
-7. **控制依赖复杂度**：避免过于复杂的依赖链，保持依赖关系清晰。
-8. **合理使用 `DynRef`**：只在需要引用其他参数或 fixture 时使用 `DynRef`。
-9. **与其他装饰器结合**：可以与 `@pytest.mark.parametrize` 等装饰器结合使用。
+6. **使用有意义的参数名**：使用描述性的参数名有助于理解测试逻辑和依赖关系。
+7. **控制依赖复杂度**：避免过于复杂的依赖链，保持依赖关系清晰可维护。
+8. **利用自动依赖检测**：`@param_generator` 自动推断依赖关系，无需手动配置。
+9. **集成pytest原生功能**：与 `@pytest.mark.parametrize`、`@pytest.fixture` 等装饰器无缝结合。
+10. **参数名精确匹配**：确保依赖关系通过精确的参数名匹配来实现。
 
 ## 常见问题
 
@@ -468,10 +306,11 @@ markers =
 
 确保：
 
-1. 使用了 `@generator` 装饰器
-2. 在测试函数上使用了 `@use_generators` 装饰器
-3. 参数名在两个装饰器之间保持一致
-4. 依赖的参数在测试环境中可用
+1. 使用了 `@param_generator` 装饰器
+2. 测试函数中引用了生成器函数
+3. 生成器的参数名与被依赖的参数完全匹配
+4. 依赖的参数在测试参数化或fixture中可用
+5. 没有循环依赖问题
 
 ### 如何调试参数生成问题？
 
@@ -481,6 +320,12 @@ markers =
 python -m pytest -v -s --log-cli-level=DEBUG
 ```
 
+查看依赖解析过程：
+
+```bash
+python -m pytest tests/ -v --dynamic-params-debug
+```
+
 ### 如何处理循环依赖？
 
 重构参数生成器，消除循环依赖关系。可以：
@@ -488,15 +333,24 @@ python -m pytest -v -s --log-cli-level=DEBUG
 1. 合并相关的生成器函数
 2. 提取共享逻辑到单独的函数
 3. 重新设计参数依赖结构
+4. 使用参数化fixture替代部分依赖链
+
+### 如何优化性能？
+
+1. **启用缓存**：对计算密集的生成器启用缓存
+2. **使用合理的scope**：根据数据特性选择合适的scope等级
+3. **避免重复计算**：利用pytest的fixture缓存机制
+4. **懒加载**：对可选依赖启用懒加载
+5. **批量处理**：相关参数尽量在一个生成器中处理
 
 ## 性能建议
 
-1. **懒加载**：启用懒加载功能可以避免不必要的参数生成
-2. **缓存**：对计算密集型的生成器启用缓存
-3. **作用域**：根据测试需求合理选择作用域，避免过度重复计算
-4. **依赖解析**：简化参数生成器之间的依赖关系，避免过于复杂的依赖链
-5. **批量生成**：对于相关参数，考虑在一个生成器中批量生成，减少依赖解析开销
-6. **合理配置**：根据测试环境和需求调整缓存大小和其他配置参数
+1. **缓存策略**：根据测试频率调整缓存大小和时效
+2. **懒加载配置**：对大型数据或远程资源启用懒加载
+3. **作用域优化**：了解scope自动推断逻辑，必要时手动调整
+4. **依赖解析效率**：保持依赖链简洁，避免深度嵌套
+5. **批量生成优势**：相关参数同生成器处理减少解析开销
+6. **监控资源使用**：定期检查内存和计算资源消耗
 
 ## 测试执行命令
 

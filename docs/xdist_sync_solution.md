@@ -274,11 +274,16 @@ def pytest_unconfigure(config):
 #### Step 3: 在测试中使用
 
 ```python
-from dynamic_params import parametrize_test
+import pytest
+from dynamic_params import parametrize_fixture
 
-@parametrize_test("data", "generator:generate_db_data")
-def test_with_data(data):
-    assert data is not None
+@parametrize_fixture("data", "generator:generate_db_data")
+@pytest.fixture
+def data_fixture(data):
+    return data
+
+def test_with_data(data_fixture):
+    assert data_fixture is not None
 ```
 
 #### Step 4: 运行测试
@@ -309,9 +314,16 @@ def generate_session_data():
     print(f"Worker: {get_worker_id()}")
     yield from [1, 2, 3, 4, 5]
 
-@parametrize_test("data", "generator:generate_session_data")
-def test_session(data):
-    assert data in [1, 2, 3, 4, 5]
+import pytest
+from dynamic_params import parametrize_fixture
+
+@parametrize_fixture("data", "generator:generate_session_data")
+@pytest.fixture
+def session_data_fixture(data):
+    return data
+
+def test_session(session_data_fixture):
+    assert session_data_fixture in [1, 2, 3, 4, 5]
 ```
 
 ### 示例 2：数据库预加载
@@ -333,9 +345,13 @@ def generate_users():
         return users
     return []
 
-@parametrize_test("user", "generator:generate_users")
-def test_user_data(user):
-    assert 'username' in user
+@parametrize_fixture("user", "generator:generate_users")
+@pytest.fixture
+def user_fixture(user):
+    return user
+
+def test_user_data(user_fixture):
+    assert 'username' in user_fixture
 ```
 
 ### 示例 3：网络 API 调用

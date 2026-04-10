@@ -364,10 +364,15 @@ def pytest_unconfigure(config):
 
 ```python
 # tests/test_database.py
-from dynamic_params import parametrize_test
+import pytest
+from dynamic_params import parametrize_fixture
 
-@parametrize_test("test_data", "generator:generate_db_test_data")
-def test_database_data(test_data):
+@parametrize_fixture("test_data", "generator:generate_db_test_data")
+@pytest.fixture
+def database_data_fixture(test_data):
+    return test_data
+
+def test_database_data(database_data_fixture):
     """
     测试数据库数据
     
@@ -414,10 +419,15 @@ def generate_api_test_data():
 
 ```python
 # tests/test_api.py
-from dynamic_params import parametrize_test
+import pytest
+from dynamic_params import parametrize_fixture
 
-@parametrize_test("api_data", "generator:generate_api_test_data")
-def test_api_response(api_data):
+@parametrize_fixture("api_data", "generator:generate_api_test_data")
+@pytest.fixture
+def api_data_fixture(api_data):
+    return api_data
+
+def test_api_response(api_data_fixture):
     """
     测试 API 数据
     
@@ -731,7 +741,7 @@ from dynamic_params.engine.generator.external_resource import (
     resource_preloader
 )
 from dynamic_params.engine.generator.worker_pool import db_pool
-from dynamic_params import parametrize_test, parametrize_generator
+from dynamic_params import parametrize_fixture
 
 # ============================================================================
 # 1. 静态数据 - 预加载
@@ -805,9 +815,17 @@ def generate_external_rates():
 # 4. 组合使用
 # ============================================================================
 
-@parametrize_generator("config", "generator:generate_static_config")
-@parametrize_test("order", "generator:generate_realtime_orders")
-def test_order_with_config(config, order):
+@parametrize_fixture("config", "generator:generate_static_config")
+@pytest.fixture
+def config_fixture(config):
+    return config
+
+@parametrize_fixture("order", "generator:generate_realtime_orders")
+@pytest.fixture
+def order_fixture(order):
+    return order
+
+def test_order_with_config(config_fixture, order_fixture):
     """
     测试订单处理
     

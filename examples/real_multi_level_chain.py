@@ -5,7 +5,7 @@
 """
 
 import pytest
-from src.dynamic_params.public.decorators.param_generator import param_generator
+from dynamic_params import param_generator
 
 # ========== 第1级：最基础的数据源 ==========
 

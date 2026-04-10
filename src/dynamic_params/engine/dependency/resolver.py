@@ -1,117 +1,116 @@
-# Dependency resolver implementation
+# Dependency resolution implementation
 
-from typing import Dict, List, Any
-
+from typing import Dict, List, Optional, Set
 from .graph import DependencyGraph
-from .dynref import DynRef, DynRefExpression
-from ...errors import DependencyError
+from ...errors import CircularDependencyError
+
 
 class DependencyResolver:
-    """Class for resolving dependencies between parameters"""
+    """Class for resolving dependency relationships and determining execution order"""
     
     def __init__(self):
         """Initialize a dependency resolver"""
-        self.graph = DependencyGraph()
+        self._graph = DependencyGraph()
+        self._resolved_dependencies: Dict[str, List[str]] = {}
     
-    def resolve(self, dependencies: Dict[str, Any], context: Dict[str, Any]) -> Dict[str, Any]:
-        """Resolve all dependencies
+    def add_function(self, func_name: str, dependencies: List[str]) -> None:
+        """Add a function and its dependencies
         
         Args:
-            dependencies: Dictionary of parameter names to their values (which may contain DynRefs)
-            context: Dictionary of existing parameter values
+            func_name: Name of the function
+            dependencies: List of function names that this function depends on
+        """
+        for dep in dependencies:
+            self._graph.add_dependency(func_name, dep)
+    
+    def resolve_dependencies(self, target: str) -> List[str]:
+        """Resolve dependencies for a target function
+        
+        Args:
+            target: Function name to resolve dependencies for
             
         Returns:
-            Dictionary of resolved parameter values
+            List of dependency functions in execution order
+            
+        Raises:
+            CircularDependencyError: If a circular dependency is detected
         """
-        # Build dependency graph
-        self._build_dependency_graph(dependencies, context)
+        if target not in self._graph:
+            return []
         
-        # Get topological order
-        try:
-            order = self.graph.topological_order()
-        except Exception as e:
-            raise DependencyError(f"Failed to resolve dependencies: {str(e)}")
+        # Check for circular dependencies
+        if self._graph.has_cycle():
+            raise CircularDependencyError("Circular dependency detected in the dependency graph")
         
-        # Resolve dependencies in topological order
-        resolved = context.copy()
-        for param_name in order:
-            if param_name in dependencies:
-                value = dependencies[param_name]
-                resolved_value = self._resolve_value(value, resolved)
-                resolved[param_name] = resolved_value
+        # Get topological order of all nodes and filter to target dependencies
+        all_order = self._graph.topological_order()
+        target_index = all_order.index(target)
+        
+        # Get dependencies that come before the target
+        resolved = []
+        for node in all_order[:target_index]:
+            # Check if node is a dependency of the target
+            if self._is_dependency(target, node):
+                resolved.append(node)
         
         return resolved
     
-    def _build_dependency_graph(self, dependencies: Dict[str, Any], context: Dict[str, Any]) -> None:
-        """Build the dependency graph
+    def _is_dependency(self, source: str, candidate: str) -> bool:
+        """Check if candidate is a dependency of source node
         
         Args:
-            dependencies: Dictionary of parameter names to their values
-            context: Dictionary of existing parameter values
-        """
-        # Clear existing graph
-        self.graph = DependencyGraph()
-        
-        # Add all parameters to the graph first
-        for param_name in dependencies:
-            if param_name not in self.graph._graph:
-                self.graph._graph[param_name] = set()
-        
-        # Add dependencies for each parameter
-        for param_name, value in dependencies.items():
-            # Find all DynRefs in the value
-            refs = self._find_dynrefs(value)
-            for ref_name in refs:
-                # Add dependency
-                self.graph.add_dependency(param_name, ref_name)
-                # Ensure the referenced parameter is in the graph
-                if ref_name not in self.graph._graph:
-                    self.graph._graph[ref_name] = set()
-    
-    def _find_dynrefs(self, value: Any) -> List[str]:
-        """Find all DynRefs in a value
-        
-        Args:
-            value: The value to search for DynRefs
+            source: Source node
+            candidate: Candidate dependency node
             
         Returns:
-            List of parameter names referenced by DynRefs
+            True if candidate is a dependency of source, False otherwise
         """
-        refs = []
+        def dfs(node: str, target: str, visited: Set[str]) -> bool:
+            if node == target:
+                return True
+            
+            if node in visited:
+                return False
+            
+            visited.add(node)
+            
+            for neighbor in self._graph.get_dependencies(node):
+                if dfs(neighbor, target, visited):
+                    return True
+            
+            return False
         
-        def _find_dynrefs_recursive(val):
-            if isinstance(val, DynRef):
-                refs.append(val.name)
-            elif isinstance(val, DynRefExpression):
-                _find_dynrefs_recursive(val.left)
-                _find_dynrefs_recursive(val.right)
-            elif isinstance(val, (list, tuple)):
-                for item in val:
-                    _find_dynrefs_recursive(item)
-            elif isinstance(val, dict):
-                for item in val.values():
-                    _find_dynrefs_recursive(item)
-        
-        _find_dynrefs_recursive(value)
-        return refs
+        return dfs(source, candidate, set())
     
-    def _resolve_value(self, value: Any, context: Dict[str, Any]) -> Any:
-        """Resolve a value that may contain DynRefs
+    def get_execution_order(self) -> List[str]:
+        """Get topological execution order of all functions
+        
+        Returns:
+            List of function names in topological order
+            
+        Raises:
+            CircularDependencyError: If a circular dependency is detected
+        """
+        if self._graph.has_cycle():
+            raise CircularDependencyError("Circular dependency detected")
+        
+        return self._graph.topological_order()
+    
+    def get_direct_dependencies(self, func_name: str) -> List[str]:
+        """Get direct dependencies of a function
         
         Args:
-            value: The value to resolve
-            context: Dictionary of parameter values
+            func_name: Function name
             
         Returns:
-            The resolved value
+            List of direct dependency names
         """
-        if isinstance(value, (DynRef, DynRefExpression)):
-            return value.resolve(context)
-        elif isinstance(value, list):
-            return [self._resolve_value(item, context) for item in value]
-        elif isinstance(value, tuple):
-            return tuple(self._resolve_value(item, context) for item in value)
-        elif isinstance(value, dict):
-            return {k: self._resolve_value(v, context) for k, v in value.items()}
-        else:
-            return value
+        return self._graph.get_dependencies(func_name)
+
+    def __contains__(self, func_name: str) -> bool:
+        """Check if function is in the resolver"""
+        return func_name in self._graph
+    
+    def __repr__(self) -> str:
+        """String representation"""
+        return f"DependencyResolver({len(self._graph)} functions)"

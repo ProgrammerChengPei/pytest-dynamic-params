@@ -24,9 +24,7 @@ class ParametrizeError(DynamicParamsError):
     """Error related to parameterization"""
     pass
 
-class DynRefError(DynamicParamsError):
-    """Error related to DynRef usage"""
-    pass
+
 
 class ConfigError(DynamicParamsError):
     """Error related to configuration"""

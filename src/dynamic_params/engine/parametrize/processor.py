@@ -5,8 +5,6 @@ from typing import Any, Dict, List
 from pytest import Metafunc
 
 from ...errors import ParametrizeError
-from ..dependency.dynref import DynRef, DynRefExpression
-from ..dependency.resolver import DependencyResolver
 from .combinator import ParametrizeCombinator
 
 
@@ -15,7 +13,6 @@ class ParametrizeProcessor:
 
     def __init__(self):
         """Initialize a parametrize processor"""
-        self.resolver = DependencyResolver()
         self.combinator = ParametrizeCombinator()
 
     def _is_fixture(self, value: Any) -> bool:
@@ -248,9 +245,8 @@ class ParametrizeProcessor:
                 resolved_value = self._resolve_value(value, context)
                 resolved_params[argname] = resolved_value
 
-        # Resolve dependencies
-        resolved = self.resolver.resolve(resolved_params, context)
-        return resolved
+        # Simplified dependency handling - with current API, dependencies are handled via parameter name matching
+        return resolved_params
 
     def generate_param_combinations(
         self, parametrizations: List[Dict[str, Any]], metafunc=None
@@ -328,7 +324,7 @@ class ParametrizeProcessor:
         return self.combinator.combine(processed_parametrizations)
 
     def _resolve_value(self, value: Any, context: Dict[str, Any], metafunc=None) -> Any:
-        """Resolve a value that may contain generators or DynRefs
+        """Resolve a value that may contain generators
 
         Args:
             value: The value to resolve
@@ -394,9 +390,7 @@ class ParametrizeProcessor:
                         # For now, return the value as-is to avoid breaking tests
                         return value
                     raise
-        # If value is a DynRef or DynRefExpression, resolve it
-        elif isinstance(value, (DynRef, DynRefExpression)):
-            return value.resolve(context)
+
         # If value is a list, resolve each item
         elif isinstance(value, list):
             return [self._resolve_value(item, context) for item in value]
